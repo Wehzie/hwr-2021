@@ -2,6 +2,7 @@ import unittest
 
 from src import main
 
+
 class TestMain(unittest.TestCase):
     def test_hello_world(self):
         """
@@ -9,6 +10,7 @@ class TestMain(unittest.TestCase):
         """
         self.assertEqual(main.hello_world(), "hello_world")
 
+
 # make tests runnable from the command line
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

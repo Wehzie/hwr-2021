@@ -65,3 +65,11 @@ Unit tests for deep learning models.
 - <https://www.tensorflow.org/api_docs/python/tf/test>
 - <https://www.tensorflow.org/community/contribute/tests>
 - <https://towardsdatascience.com/unit-testing-in-deep-learning-b91d366e4862>
+
+## Architecture
+
+Go to [ARCHITECTURE.md](ARCHITECTURE.md) to learn more about this project's architecture.
+
+## Contributing
+
+Go to [CONTRIBUTING.md](CONTRIBUTING.md) to learn more about contributing to this repository.
