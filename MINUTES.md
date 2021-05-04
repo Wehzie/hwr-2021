@@ -48,6 +48,30 @@
 - made a preliminary schedule
 - made slides for monday's presentation
 
+## 2021, April 4, Tuesday
 
+- line segmentation
+	- histogram, ignore curvature
+	- histograms on split columns
+	- histograms on split column rotated inputs
+	- A*
+	- AruNet
 
+approach: histogram, ignore curvature
 
+- word segmentation
+
+approach: histogram
+
+word-segmentation matters for information preservation
+question: do we need whitespace in the output?
+(probably yes, transcription)
+
+- character segmentation
+
+approach: sliding window for character segmentation
+
+Todo:
+andele and lars focus on line segmentation
+mark and rafael focus on character recognition
+we plan to use character recognition with a sliding window approach for character segmentation
