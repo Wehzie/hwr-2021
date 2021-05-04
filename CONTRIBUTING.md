@@ -24,6 +24,7 @@
 - FP; let functions be pure when easily possible
 - KISS; keep it simple stupid; no huge functions or modules; only do one thing per method or module
 - OOP; don't do Java but put all methods into appropriate classes
+- style tests that can check whether e. G. snake_case for variable names
 
 Install code formatter `black` to enforce PEP8.
 		

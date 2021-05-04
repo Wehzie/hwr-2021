@@ -30,3 +30,24 @@
     - character segmentation: Lars, Andele
     - character recognition: Mark, Rafael
 - architecture diagram
+
+## 2021, April 29, Thurdsay
+
+- presented papers
+- text segmentation: line recognition (problem: curves not straight) and then word recognition with ink histograms across the line
+- character segmentation:
+	1. e. G. CNN with pretraining
+	2. stroke gravity
+	
+- character recognition: CNN
+- character bounding-box: clean out non-character fragments (this is not solved by binarization since the fragment may be from another character)
+
+- strategy regarding segmentation: ignore curved lines
+- strategy regarding recognition: no n-grams just simple fully connected or CNN
+
+- made a preliminary schedule
+- made slides for monday's presentation
+
+
+
+
