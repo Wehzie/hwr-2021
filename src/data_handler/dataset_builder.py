@@ -10,6 +10,9 @@ from dotenv import load_dotenv
 class DatasetBuilder():
 
     load_dotenv()   # load environment variables from .env file
+
+    chunk_size = 128    #chunk size for downloading data
+
     rename_folders = {
         "original": [
             "image-data.zip",
@@ -19,10 +22,15 @@ class DatasetBuilder():
             ],
         "new": ["fragments", "characters", "character_styles", "fragment_styles"]
     }
+
     data_split = {
         "train": 0.8,
-        "train_dev": 0.1,
-        "train_test": 0.1,
+        "dev": 0.1,
+        "test": 0.1,
+    }
+
+    directory_size = {
+        "characters": 27,
     }
     
     def __init__(self):
@@ -43,7 +51,7 @@ class DatasetBuilder():
 
         # save file
         with open(Path(os.environ['DATA_PATH'])/f_name, 'wb') as f:
-            for chunk in r.iter_content(chunk_size=128):
+            for chunk in r.iter_content(self.chunk_size):
                 f.write(chunk)
 
     def download_all_data(self):
@@ -71,111 +79,44 @@ class DatasetBuilder():
         shutil.unpack_archive(read_path, write_path, 'gztar')
         os.remove(read_path)
 
-    def split_data(self):
+    def split_data(self) -> None:
         '''
         Split data into train, dev (validation) and test sets.
         '''
-        # assume that we have the original download file from the internet but renamed to 'characters'
-        # 
-        # in CNN module we have 
-        # https://cs230.stanford.edu/blog/split/ 
-        # X_train, y_train, X_dev, y_dev, X_test, y_test = 
+        read_path = Path(os.environ['DATA_PATH']) / self.rename_folders['new'][1]
+        letter_directories = os.listdir(read_path)
+        for data_set in self.data_split: # train, dev, test
+            os.mkdir(Path(read_path/data_set))
+            for letter in letter_directories:
+                os.mkdir(Path(read_path/data_set/letter))
+        for letter in letter_directories:
+            images = os.listdir(Path(read_path/letter))
+            split_train = int(len(images)*self.data_split["train"])
+            split_dev = split_train + int(len(images)*self.data_split["dev"])
 
+            train_images = images[:split_train]
+            dev_images = images[split_train:split_dev]
+            test_images = images[split_dev:]
 
-        # read_path = './data/characters/'
-        read_path = Path(os.environ['DATA_PATH']) / self.rename_folders['original'][0]
-        dirs = {"train": 0.8, "dev": 0.1, "test": 0.1]
-        for i in dirs:
-            os.mkdir(i)
-        #for i in os.listdir(read_path): each character directory
-            
+            for image in train_images:
+                shutil.move(Path(read_path/letter/image), Path(read_path/"train"/letter/image))
+            for image in dev_images:
+                shutil.move(Path(read_path/letter/image), Path(read_path/"dev"/letter/image))
+            for image in test_images:
+                shutil.move(Path(read_path/letter/image), Path(read_path/"test"/letter/image))
+            os.rmdir(Path(read_path/letter))
 
-
-        NotImplemented
-
-    def assert_data_correct(self):
+    def assert_data_correct(self, data_type = "characters") -> bool:
         '''
         Assert that the data exists and is in the correct format.
-        NOTE this may be true in different formats
         '''
-        NotImplemented
-
-
-def download_data_selenium():
-    '''
-    Download data using Selenium.
-    '''
-    from selenium import webdriver
-    import json
-
-    # filename: monkbrill.tar.gz
-    # description: labeled hebrew characters
-    url = ''
-
-    # initialize webdriver
-    driver = webdriver.Firefox()
-    driver.get(url)
-
-    # enter password onto website
-    pass_field = driver.find_element_by_id('password')
-    pass_field.send_keys('')
-
-    # submit password form
-    submit_button = driver.find_element_by_id('password-submit')
-    submit_button.click()
-
-    headers = {
-    "User-Agent":
-        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:88.0) Gecko/20100101 Firefox/88.0"
-    }
-    s = requests.session()
-    s.headers.update(headers)
-
-    for cookie in driver.get_cookies():
-        c = {cookie['name']: cookie['value']}
-        s.cookies.update(c)
-
-    with open('safe_cookie', 'w+') as f:
-        json.dump(driver.get_cookies(), f, indent=True)
-    
-    # download data
-    url = ''
-    r = s.get(url, stream=True)
-    with open('out.tar.gz', 'wb') as fd:
-        for chunk in r.iter_content(chunk_size=128):
-            fd.write(chunk)
-
-def download_data_cookie():
-    '''
-    Download data using requests with cookies provided by Selenium.
-    Does not require that Selenium is installed.
-    Requires that a fresh cookie can be loaded.
-    '''
-    import json
-    headers = {
-    "User-Agent":
-        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:88.0) Gecko/20100101 Firefox/88.0"
-    }
-
-    s = requests.Session()
-    s.headers.update(headers)
-
-    cookies = None
-    with open('safe_cookie', 'r') as f:
-        cookies = json.load(f)
-
-    for cookie in cookies:
-        print(cookie)
-        c = {cookie['name']: cookie['value']}
-        s.cookies.update(c)
-    
-    # download data
-    url = ''
-    r = s.get(url, stream=True)
-    with open('out.tar.gz', 'wb') as fd:
-        for chunk in r.iter_content(chunk_size=128):
-            fd.write(chunk)
-
+        read_path = Path(os.environ['DATA_PATH']) / self.rename_folders['new'][1]
+        if set(os.listdir(read_path)) != {"train", "dev", "test"}:
+            return False
+        for data_set in os.listdir(read_path):
+            if len(os.listdir(Path(read_path/data_set))) != self.directory_size[data_type]:
+                return False
+        return True
 
 if __name__ == "__main__":
     dataset_builder = DatasetBuilder()
