@@ -4,10 +4,16 @@ from tensorflow.keras import layers, models, initializers, Input
 
 class RecognizerModel:
     def __init__(self):
+        """
+        Initializes the recognizer model
+        """
         self.model = None
 
     @staticmethod
     def __create_model(image_size, drop_rate) -> models.Model:
+        """
+        Creates the sequential CNN for character recognition
+        """
         model = models.Sequential()
 
         #conv1
@@ -55,13 +61,25 @@ class RecognizerModel:
         return model
 
     def get_summary(self) -> str:
+        """
+        Get summary of the recognizer model
+        """
         return self.model.summary()
 
     def predict(self, data) -> np.ndarray:
+        """
+        Predicts the character labels of given input images
+        """
         return self.model.predict(data)
 
     def save_model(self, model_path: Path) -> None:
+        """
+        Saves the model to model_path
+        """
         self.model.save(model_path)
 
     def load_model(self, model_path: Path) -> None:
+        """
+        Loads a saved model from model_path
+        """
         self.model = models.load_model(model_path, compile=False)
