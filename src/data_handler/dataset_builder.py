@@ -1,3 +1,4 @@
+import glob
 import os
 import re
 import requests
@@ -74,8 +75,23 @@ class DatasetBuilder():
         '''
         Split data into train, dev (validation) and test sets.
         '''
+        # assume that we have the original download file from the internet but renamed to 'characters'
+        # 
+        # in CNN module we have 
+        # https://cs230.stanford.edu/blog/split/ 
+        # X_train, y_train, X_dev, y_dev, X_test, y_test = 
+
+
+        # read_path = './data/characters/'
+        read_path = Path(os.environ['DATA_PATH']) / self.rename_folders['original'][0]
+        dirs = {"train": 0.8, "dev": 0.1, "test": 0.1]
+        for i in dirs:
+            os.mkdir(i)
+        #for i in os.listdir(read_path): each character directory
+            
+
+
         NotImplemented
-        
 
     def assert_data_correct(self):
         '''
