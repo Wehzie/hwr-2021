@@ -56,7 +56,7 @@ Execute `black` on the project's root directory.
 - git
 - github
 - gitignore (don't include data)
-- don't leave old code snippets uncommented accross committs
+- don't leave old code snippets uncommented across commits
 - use branches
 - use pull requests
 	
@@ -64,8 +64,8 @@ Execute `black` on the project's root directory.
 
 - do not hard code
 - no uncommenting-commenting of parameters and in-code editing
-- use .env file https://github.com/theskumar/python-dotenv/stargazers
-- or use command line arguments with argparse
+- use .env file https://github.com/theskumar/python-dotenv/
+- use command line arguments with argparse
 
 ### Roadmap
 
