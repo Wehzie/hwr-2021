@@ -35,6 +35,10 @@ After using the software you may wish to deactivate the virtual environment as f
 
     deactivate
 
+Lastly, ensure to manually add `.env` to the root directory of the project.
+This will for example enable downloading the password protected data.
+Contact the project authors to request the `.env` file.
+
 ## Running
 
 Navigate to the project's root directory.
@@ -73,3 +77,7 @@ Go to [ARCHITECTURE.md](ARCHITECTURE.md) to learn more about this project's arch
 ## Contributing
 
 Go to [CONTRIBUTING.md](CONTRIBUTING.md) to learn more about contributing to this repository.
+
+## Data
+
+Go to [DATA.md](data/DATA.md) to learn more about loading data into this repository; this will be necessary to run the pipeline.

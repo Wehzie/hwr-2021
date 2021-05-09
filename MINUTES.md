@@ -48,7 +48,7 @@
 - made a preliminary schedule
 - made slides for monday's presentation
 
-## 2021, April 4, Tuesday
+## 2021, May 4, Tuesday
 
 - line segmentation
 	- histogram, ignore curvature
@@ -75,3 +75,18 @@ Todo:
 andele and lars focus on line segmentation
 mark and rafael focus on character recognition
 we plan to use character recognition with a sliding window approach for character segmentation
+
+## 2021, May 9, Sunday
+
+- Save trained character recognition model
+- Load trained character recognition model into 
+- Fixed import problem
+
+
+
+
+
+
+
+
+

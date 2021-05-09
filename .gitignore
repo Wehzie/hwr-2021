@@ -130,3 +130,15 @@ dmypy.json
 
 # Visual Studio Code
 .vscode
+
+# Anything inside the data/ directory except the DATA.md
+data/*
+!data/DATA.md
+
+# possible logs
+.log
+.logs
+
+# images
+*.png
+*.jpeg
