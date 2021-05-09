@@ -43,23 +43,3 @@ The data loader expects the following structure of the data.
 
         fragment_styles/
             ...
-
-## Optional/Deprecated: Data download with Selenium
-
-You may wish to use `selenium` to download all data.
-First install the package.
-
-    pip3 install selenium
-
-Then download the `geckodriver` for Firefox from <https://github.com/mozilla/geckodriver/releases>.
-Choose the appropriate download for your operating system.
-Then unpack the file.
-Lastly add the driver to your PATH.
-
-    # example for linux
-    cd ~/Downloads
-    wget https://github.com/mozilla/geckodriver/releases/download/v0.29.1/geckodriver-v0.29.1-linux64.tar.gz
-    tar -xvf geckodriver-v0.29.1-linux64.tar.gz
-    mv  geckodriver /usr/local/bin
-
-Further instructions can be found (here)[https://selenium-python.readthedocs.io/installation.html].
