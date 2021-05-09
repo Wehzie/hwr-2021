@@ -26,9 +26,9 @@
 - OOP; don't do Java but put all methods into appropriate classes
 - style tests that can check whether e. G. snake_case for variable names
 
-Install code formatter `black` to enforce PEP8.
+Install code formatter `black` to enforce PEP8 and linter `flake8` to find possible bugs.
 		
-	pip3 install black
+	pip3 install black flake8 pep8-naming
 
 Navigate to the project's root directory.
 
@@ -38,10 +38,25 @@ Execute `black` on the project's root directory.
 
 	black .
 
+Execute `flake8` on `src` and `tests` directories.
+
+	pylint src/ tests/
+
 ### Testing
 
-- unit tests with pytest or unittest
-	
+Use unit testing.
+We use the `unittest` module which is available in the Python standard library.
+
+To run all tests first navigate to the project's root directory.
+
+	cd ~/path/to/project/
+
+Then run the following command to let the `unittest` module discover test files.
+
+	python -m unittest discover -s tests
+
+So long as test files are named `test*.py` they will be automatically executed.
+
 ### Documentation
 
 - README.md

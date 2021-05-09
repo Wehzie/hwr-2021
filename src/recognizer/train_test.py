@@ -1,13 +1,12 @@
-import sys
-sys.path.insert(0, '../data_handler')
+import os, sys, inspect
+current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+project_root_dir = os.path.dirname(os.path.dirname(current_dir))
+sys.path.insert(0, project_root_dir)
 
-print(sys.path)
-
-exit()
+from src.data_handler.dataset_builder import DatasetBuilder
 
 dataset_builder = DatasetBuilder()
 print("test")
-#https://chrisyeh96.github.io/2017/08/08/definitive-guide-python-imports.html
 #https://www.tensorflow.org/tutorials/images/cnn
 
 def load_data():

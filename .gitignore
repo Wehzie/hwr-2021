@@ -138,3 +138,7 @@ data/*
 # possible logs
 .log
 .logs
+
+# images
+*.png
+*.jpeg

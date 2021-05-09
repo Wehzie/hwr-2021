@@ -2,3 +2,8 @@ numpy
 tensorflow
 keras
 python-dotenv
+
+# development and testing
+black
+flake8
+pep8-naming
