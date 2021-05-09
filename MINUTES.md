@@ -79,8 +79,11 @@ we plan to use character recognition with a sliding window approach for characte
 ## 2021, May 9, Sunday
 
 - Save trained character recognition model
-- Load trained character recognition model into 
+- Load trained character recognition model into fragment pipeline
 - Fixed import problem
+- Discussion of segmentation ideas
+- Preparation of Monday presentation
+- Plan to merge branches to main
 
 
 
