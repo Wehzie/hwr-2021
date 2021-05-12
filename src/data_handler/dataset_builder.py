@@ -50,9 +50,12 @@ class DatasetBuilder():
         f_name = re.findall('filename="(.+)"', d)[0]
 
         # save file
-        with open(Path(os.environ['DATA_PATH'])/f_name, 'wb') as f:
-            for chunk in r.iter_content(self.chunk_size):
-                f.write(chunk)
+        try:
+            with open(Path(os.environ['DATA_PATH'])/f_name, 'wb') as f:
+                for chunk in r.iter_content(self.chunk_size):
+                    f.write(chunk)
+        except:
+            print(f"Error: {os.listdir(Path(os.environ['DATA_PATH']))}")
 
     def download_all_data(self):
         '''

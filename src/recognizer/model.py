@@ -1,4 +1,5 @@
 import numpy as np
+from pathlib import Path
 from tensorflow import keras
 from tensorflow.keras import layers, models, initializers, Input
 
@@ -9,8 +10,7 @@ class RecognizerModel:
         """
         self.model = None
 
-    @staticmethod
-    def __create_model(image_size, drop_rate) -> models.Model:
+    def create_model(self, image_size, drop_rate) -> models.Model:
         """
         Creates the sequential CNN for character recognition
         """

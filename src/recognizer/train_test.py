@@ -1,12 +1,15 @@
-import os, sys, inspect
+import os, sys, inspect, cv2
+import numpy as np
 current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 project_root_dir = os.path.dirname(os.path.dirname(current_dir))
 sys.path.insert(0, project_root_dir)
 
+from glob import glob
 from src.data_handler.dataset_builder import DatasetBuilder
+from src.recognizer.model import RecognizerModel
 from dotenv import load_dotenv
-from PIL import Image
 from pathlib import Path
+from tensorflow import keras
 
 #https://www.tensorflow.org/tutorials/images/cnn
 
@@ -33,31 +36,43 @@ class train_test():
         X_train, y_train, X_dev, y_dev, X_test, y_test = [],[],[],[],[],[]
         
         for letter in self.letters: 
-
+            train_images = imagePaths = glob(f'{Path(read_path/"train"/letter)}/*.pgm')
+            dev_images = imagePaths = glob(f'{Path(read_path/"dev"/letter)}/*.pgm')
+            test_images = imagePaths = glob(f'{Path(read_path/"test"/letter)}/*.pgm')
             # training data
-            for img in os.listdir(Path(read_path/data_sets[0]/letter)):
-                X_train.append(Image.open(Path(read_path/data_sets[0]/letter/img)))
+            for img in train_images:
+                image = cv2.imread(img)
+                image = cv2.resize(image, (64, 64))
+                X_train.append(image)
                 y_train.append(self.letters.index(letter))
 
             # dev data
-            for img in os.listdir(Path(read_path/data_sets[1]/letter)):
-                X_dev.append(Image.open(Path(read_path/data_sets[1]/letter/img)))
+            for img in dev_images:
+                image = cv2.imread(img)
+                image = cv2.resize(image, (64, 64))
+                X_dev.append(image)
                 y_dev.append(self.letters.index(letter))
 
             # test data
-            for img in os.listdir(Path(read_path/data_sets[2]/letter)):
-                X_test.append(Image.open(Path(read_path/data_sets[2]/letter/img)))
+            for img in test_images:
+                image = cv2.imread(img)
+                image = cv2.resize(image, (64, 64))
+                X_test.append(image)
                 y_test.append(self.letters.index(letter))
 
-        return X_train, y_train, X_dev, y_dev, X_test, y_test
+        return np.array(X_train), np.array(y_train), np.array(X_dev), np.array(y_dev), np.array(X_test), np.array(y_test)
 
 
     def train_model(self):
-        NotImplemented
+        Char_Recognizer = RecognizerModel()
+        Char_Recognizer.model = Char_Recognizer.create_model(64, 0.3)
+        Char_Recognizer.model.compile(optimizer=keras.optimizers.Adam() , loss=keras.losses.SparseCategoricalCrossentropy())
+        Char_Recognizer.model.fit(self.X_train, self.y_train, validation_data=(self.X_dev,self.y_dev), epochs=5)
         # 
 
     def test_model(self):
         NotImplemented
 
 if __name__ == "__main__":
-    train_test()
+    trainer = train_test()
+    trainer.train_model()
