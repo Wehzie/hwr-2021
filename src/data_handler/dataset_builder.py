@@ -111,6 +111,8 @@ class DatasetBuilder():
         Assert that the data exists and is in the correct format.
         '''
         read_path = Path(os.environ['DATA_PATH']) / self.rename_folders['new'][1]
+        if not os.path.exists(read_path):
+            return False
         if set(os.listdir(read_path)) != {"train", "dev", "test"}:
             return False
         for data_set in os.listdir(read_path):

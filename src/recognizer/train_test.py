@@ -27,6 +27,7 @@ class train_test():
         read_path = Path(os.environ['DATA_PATH']) / self.dataset_builder.rename_folders['new'][1]
         if not self.dataset_builder.assert_data_correct():
                 self.dataset_builder.download_all_data()
+                self.dataset_builder.unpack_rename_data()
                 self.dataset_builder.split_data()
         data_sets = os.listdir(read_path)
         X_train, y_train, X_dev, y_dev, X_test, y_test = [],[],[],[],[],[]
