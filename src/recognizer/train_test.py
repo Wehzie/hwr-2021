@@ -24,6 +24,7 @@ class train_test():
                         'Kaf-final', 'Lamed', 'Mem', 'Mem-medial', 'Nun-final', 'Nun-medial',
                         'Pe', 'Pe-final', 'Qof', 'Resh', 'Samekh', 'Shin', 'Taw',
                         'Tet', 'Tsadi-final', 'Tsadi-medial', 'Waw', 'Yod', 'Zayin']
+        self.img_size = (50,60)
         self.X_train, self.y_train, self.X_dev, self.y_dev, self.X_test, self.y_test = self.load_data()
 
     def load_data(self):
@@ -42,21 +43,21 @@ class train_test():
             # training data
             for img in train_images:
                 image = cv2.imread(img)
-                image = cv2.resize(image, (64, 64))
+                image = cv2.resize(image, self.img_size)
                 X_train.append(image)
                 y_train.append(self.letters.index(letter))
 
             # dev data
             for img in dev_images:
                 image = cv2.imread(img)
-                image = cv2.resize(image, (64, 64))
+                image = cv2.resize(image, self.img_size)
                 X_dev.append(image)
                 y_dev.append(self.letters.index(letter))
 
             # test data
             for img in test_images:
                 image = cv2.imread(img)
-                image = cv2.resize(image, (64, 64))
+                image = cv2.resize(image, self.img_size)
                 X_test.append(image)
                 y_test.append(self.letters.index(letter))
 
@@ -65,13 +66,17 @@ class train_test():
 
     def train_model(self):
         Char_Recognizer = RecognizerModel()
-        Char_Recognizer.model = Char_Recognizer.create_model(64, 0.3)
-        Char_Recognizer.model.compile(optimizer=keras.optimizers.Adam() , loss=keras.losses.SparseCategoricalCrossentropy())
+        Char_Recognizer.model = Char_Recognizer.create_model(self.img_size, 0.3)
+        Char_Recognizer.model.compile(optimizer=keras.optimizers.Adam() , loss=keras.losses.SparseCategoricalCrossentropy(), metrics=['accuracy'])
+        print(Char_Recognizer.get_summary())
         Char_Recognizer.model.fit(self.X_train, self.y_train, validation_data=(self.X_dev,self.y_dev), epochs=5)
-        # 
 
     def test_model(self):
-        NotImplemented
+        Char_Recognizer = RecognizerModel()
+        Char_Recognizer.model = Char_Recognizer.create_model(self.img_size, 0.3)
+        Char_Recognizer.model.compile(optimizer=keras.optimizers.Adam() , loss=keras.losses.SparseCategoricalCrossentropy(), metrics=['accuracy'])
+        print(Char_Recognizer.get_summary())
+        Char_Recognizer.model.fit(self.X_train, self.y_train, validation_data=(self.X_test,self.y_test), epochs=5)
 
 if __name__ == "__main__":
     trainer = train_test()

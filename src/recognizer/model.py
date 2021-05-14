@@ -10,7 +10,7 @@ class RecognizerModel:
         """
         self.model = None
 
-    def create_model(self, image_size, drop_rate) -> models.Model:
+    def create_model(self, image_size = (50, 60), drop_rate = 0.3) -> models.Model:
         """
         Creates the sequential CNN for character recognition
         """
@@ -20,7 +20,7 @@ class RecognizerModel:
         model.add(layers.Conv2D(16, 
                                 kernel_size = (3, 3), 
                                 activation='relu', 
-                                input_shape=(image_size, image_size, 3)))
+                                input_shape=(image_size[0], image_size[1], 3)))
         model.add(layers.MaxPooling2D((2, 2)))
         model.add(layers.Dropout(drop_rate))
 
@@ -40,17 +40,17 @@ class RecognizerModel:
 
         #FCL1
         model.add(layers.Flatten())
-        model.add(layers.Dense(units = 500,
+        model.add(layers.Dense(units = 640,
                                activation='relu',
                                 ))
 
         #FCL2
-        model.add(layers.Dense(units = 250,
+        model.add(layers.Dense(units = 320,
                                activation='relu',
                                 ))
 
         #FCL3
-        model.add(layers.Dense(units = 100,
+        model.add(layers.Dense(units = 160,
                                activation='relu',
                                 ))
 
