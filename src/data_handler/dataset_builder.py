@@ -6,6 +6,7 @@ import shutil
 from pathlib import Path
 
 from dotenv import load_dotenv
+from font_images import fontImages
 
 class DatasetBuilder():
 
@@ -123,5 +124,11 @@ class DatasetBuilder():
                 return False
         return True
 
+    def create_font_data(self):
+        font_data = fontImages()
+        if not font_data.assert_data_correct():
+            font_data.create_images()
+
 if __name__ == "__main__":
     dataset_builder = DatasetBuilder()
+    dataset_builder.create_font_data()
