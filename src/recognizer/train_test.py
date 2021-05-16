@@ -21,27 +21,36 @@ class train_test():
 
     def __init__(self) -> None:
         self.dataset_builder = DatasetBuilder()
+        self.dataset_builder.create_font_data()
         self.letters = ['Alef', 'Ayin', 'Bet', 'Dalet', 'Gimel', 'He', 'Het', 'Kaf',
                         'Kaf-final', 'Lamed', 'Mem', 'Mem-medial', 'Nun-final', 'Nun-medial',
                         'Pe', 'Pe-final', 'Qof', 'Resh', 'Samekh', 'Shin', 'Taw',
                         'Tet', 'Tsadi-final', 'Tsadi-medial', 'Waw', 'Yod', 'Zayin']
-        self.img_size = (50,60)
-        self.X_train, self.y_train, self.X_dev, self.y_dev, self.X_test, self.y_test = self.load_data()
+        self.img_size = (60,70)
+        self.X_pretrain, self.y_pretrain, self.X_train, self.y_train, self.X_dev, self.y_dev, self.X_test, self.y_test = self.load_data()
 
     def load_data(self):
         read_path = Path(os.environ['DATA_PATH']) / self.dataset_builder.rename_folders['new'][1]
+        pretrain_path = Path(os.environ['FONT_DATA'] + "training")
         if not self.dataset_builder.assert_data_correct():
                 self.dataset_builder.download_all_data()
                 self.dataset_builder.unpack_rename_data()
                 self.dataset_builder.split_data()
-        data_sets = os.listdir(read_path)
-        X_train, y_train, X_dev, y_dev, X_test, y_test = [],[],[],[],[],[]
+        X_pretrain, y_pretrain, X_train, y_train, X_dev, y_dev, X_test, y_test = [], [], [],[],[],[],[],[]
         img_size = (self.img_size[1], self.img_size[0])
+        
+        # pretraining_data
+        for i in range(len(glob(f'{pretrain_path}/*.jpeg'))):
+            img = glob(f'{pretrain_path}/*.jpeg')[i]
+            image = cv2.imread(img)
+            image = cv2.resize(image, img_size)
+            X_pretrain.append(image)
+            y_pretrain.append(i)
 
         for letter in self.letters: 
-            train_images = imagePaths = glob(f'{Path(read_path/"train"/letter)}/*.pgm')
-            dev_images = imagePaths = glob(f'{Path(read_path/"dev"/letter)}/*.pgm')
-            test_images = imagePaths = glob(f'{Path(read_path/"test"/letter)}/*.pgm')
+            train_images = glob(f'{Path(read_path/"train"/letter)}/*.pgm')
+            dev_images = glob(f'{Path(read_path/"dev"/letter)}/*.pgm')
+            test_images = glob(f'{Path(read_path/"test"/letter)}/*.pgm')
 
             # training data
             for img in train_images:
@@ -64,7 +73,7 @@ class train_test():
                 X_test.append(image)
                 y_test.append(self.letters.index(letter))
 
-        return np.array(X_train), np.array(y_train), np.array(X_dev), np.array(y_dev), np.array(X_test), np.array(y_test)
+        return np.array(X_pretrain), np.array(y_pretrain), np.array(X_train), np.array(y_train), np.array(X_dev), np.array(y_dev), np.array(X_test), np.array(y_test)
 
 
     def train_model(self):
@@ -72,7 +81,12 @@ class train_test():
         Char_Recognizer.model = Char_Recognizer.create_model(self.img_size, 0.3)
         Char_Recognizer.model.compile(optimizer=keras.optimizers.Adam() , loss=keras.losses.SparseCategoricalCrossentropy(), metrics=['accuracy'])
         print(Char_Recognizer.get_summary())
-        Char_Recognizer.model.fit(self.X_train, self.y_train, validation_data=(self.X_dev,self.y_dev), epochs=5)
+        
+        print("pretraining on font data...")
+        Char_Recognizer.model.fit(self.X_pretrain, self.y_pretrain) #pretraining
+        
+        print("training and validating on characters...")
+        Char_Recognizer.model.fit(self.X_train, self.y_train, validation_data=(self.X_dev,self.y_dev), epochs=8)
         
         # Confusion matrix on dev data with final model
         y_pred = Char_Recognizer.predict(self.X_dev)

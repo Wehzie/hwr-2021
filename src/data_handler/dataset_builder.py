@@ -3,10 +3,10 @@ import os
 import re
 import requests
 import shutil
-from pathlib import Path
 
 from dotenv import load_dotenv
-from font_images import fontImages
+from pathlib import Path
+from src.data_handler.font_images import fontImages
 
 class DatasetBuilder():
 

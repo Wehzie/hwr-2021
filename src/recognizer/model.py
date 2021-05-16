@@ -43,12 +43,11 @@ class RecognizerModel:
         model.add(layers.Dense(units = 640,
                                activation='relu',
                                 ))
-
+        model.add(layers.Dropout(drop_rate))
         #FCL2
         model.add(layers.Dense(units = 320,
                                activation='relu',
                                 ))
-
         #FCL3
         model.add(layers.Dense(units = 160,
                                activation='relu',
