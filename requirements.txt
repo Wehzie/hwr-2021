@@ -2,6 +2,7 @@ numpy
 tensorflow
 keras
 python-dotenv
+opencv-python
 
 # development and testing
 black
