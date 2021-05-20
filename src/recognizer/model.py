@@ -10,13 +10,30 @@ class RecognizerModel:
         """
         self.model = None
 
-    def create_model(self, image_size = (50, 60), drop_rate = 0.3) -> models.Model:
+    def create_model(self, image_size = (60, 70), drop_rate = 0.3) -> models.Model:
         """
         Creates the sequential CNN for character recognition
         """
+
+        # DenseNet121 pretrained architecture
+        old_model = keras.applications.DenseNet121(include_top= False, weights= 'imagenet', input_shape = (image_size[0],image_size[1],3))
+        for layer in old_model.layers[:149]:
+            layer.trainable = False
+        for layer in old_model.layers[149:]:
+            layer.trainable = True
+
         model = models.Sequential()
 
-        #conv1
+        model.add(old_model)
+        model.add(keras.layers.Flatten())
+        
+        model.add(keras.layers.Dropout(drop_rate))
+        model.add(keras.layers.BatchNormalization())
+
+
+        # Custom CNN Architecture
+        '''
+         #conv1
         model.add(layers.Conv2D(16, 
                                 kernel_size = (3, 3), 
                                 activation='relu', 
@@ -40,19 +57,23 @@ class RecognizerModel:
 
         #FCL1
         model.add(layers.Flatten())
+
+
+
+        '''
+
         model.add(layers.Dense(units = 640,
                                activation='relu',
                                 ))
-        model.add(layers.Dropout(drop_rate))
-        #FCL2
-        model.add(layers.Dense(units = 320,
-                               activation='relu',
-                                ))
-        #FCL3
+        model.add(keras.layers.Dropout(drop_rate))
+        model.add(keras.layers.BatchNormalization())
+        
         model.add(layers.Dense(units = 160,
                                activation='relu',
                                 ))
-
+        model.add(keras.layers.Dropout(drop_rate))
+        model.add(keras.layers.BatchNormalization())
+    
         #Softmax-layer (output)
         model.add(layers.Dense(units = 27,
                                activation='softmax',

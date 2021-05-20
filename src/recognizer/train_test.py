@@ -1,6 +1,7 @@
 import os, sys, inspect, cv2
 import numpy as np
 import pandas as pd
+from tensorflow.keras import callbacks
 current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 project_root_dir = os.path.dirname(os.path.dirname(current_dir))
 sys.path.insert(0, project_root_dir)
@@ -80,14 +81,16 @@ class train_test():
         Char_Recognizer = RecognizerModel()
         Char_Recognizer.model = Char_Recognizer.create_model(self.img_size, 0.3)
         Char_Recognizer.model.compile(optimizer=keras.optimizers.Adam() , loss=keras.losses.SparseCategoricalCrossentropy(), metrics=['accuracy'])
-        print(Char_Recognizer.get_summary())
+        #print(Char_Recognizer.get_summary())
         
-        print("pretraining on font data...")
-        Char_Recognizer.model.fit(self.X_pretrain, self.y_pretrain) #pretraining
+        # print("pretraining on font data...")
+        # Char_Recognizer.model.fit(self.X_pretrain, self.y_pretrain) #pretraining
         
+        es = keras.callbacks.EarlyStopping(monitor = "val_accuracy", patience = 2, restore_best_weights= True, min_delta= 0.007)
         print("training and validating on characters...")
-        Char_Recognizer.model.fit(self.X_train, self.y_train, validation_data=(self.X_dev,self.y_dev), epochs=8)
+        Char_Recognizer.model.fit(self.X_train, self.y_train, validation_data=(self.X_dev,self.y_dev), epochs=8, callbacks = [es])
         
+        print(Char_Recognizer.get_summary())
         # Confusion matrix on dev data with final model
         y_pred = Char_Recognizer.predict(self.X_dev)
         y_predict = np.argmax(y_pred, axis = 1)
@@ -95,7 +98,7 @@ class train_test():
 
     def test_model(self):
         Char_Recognizer = RecognizerModel()
-        Char_Recognizer.model = Char_Recognizer.create_model(self.img_size, 0.3)
+        Char_Recognizer.model = Char_Recognizer.create_model(self.img_size, 0.4)
         Char_Recognizer.model.compile(optimizer=keras.optimizers.Adam() , loss=keras.losses.SparseCategoricalCrossentropy(), metrics=['accuracy'])
         print(Char_Recognizer.get_summary())
         Char_Recognizer.model.fit(self.X_train, self.y_train, validation_data=(self.X_test,self.y_test), epochs=5)
