@@ -1,4 +1,3 @@
-# %%
 import glob
 import os
 import cv2 as cv
@@ -97,9 +96,17 @@ def correct_rotation(image_path, threshold):
         edges, 1, np.pi / 180, threshold, min_theta=0.45 * np.pi, max_theta=0.55 * np.pi
     )
 
-    if lines is None:
-        print("No lines found.")
-        return img
+    while (lines is None or not (10 < len(lines) < 100)) and threshold > 10:
+        if lines is not None and len(lines) > 100:
+            threshold += 10
+        else:
+            threshold -= 10
+
+        print(f"Changing threshold to {threshold}")
+        lines = cv.HoughLines(
+            edges, 1, np.pi / 180, threshold, min_theta=0.45 * np.pi, max_theta=0.55 * np.pi
+        )
+
 
     hough = img.copy()
     for r, theta in lines[:, 0, :]:
@@ -125,7 +132,6 @@ def correct_rotation(image_path, threshold):
     # binned = np.digitize(thetas, bins)
     # rotation = np.degrees(bins[stats.mode(binned).mode[0]])
     # rotation = np.degrees(np.mean(bins[np.array(Counter(binned).most_common(3))[:, 0]]))
-
     print(f"Avg. rotation based on {lines[:, 0, 1].size} lines: {rotation} deg.")
     return ndimage.rotate(img, rotation, cval=255)
 
@@ -138,9 +144,9 @@ def extract_lines(image_path):
 
     file_name = os.path.basename(image_path)
     rotated_img = correct_rotation(image_path, 100)
-    cv.imwrite(f"img/{file_name}.png", rotated_img)
+    cv.imwrite(f"img/{file_name}_rotated.png", rotated_img)
 
-    # Threshold and invert
+    #Threshold and invert
     img = cv.threshold(rotated_img, 127, 255, cv.THRESH_BINARY)[1]
     img = cv.bitwise_not(img)
     lines_img = img.copy()
@@ -158,4 +164,3 @@ if __name__ == "__main__":
     for img in glob.glob("../../data/image-data/*binarized.jpg"):
         print(f"Processing {os.path.basename(img)}")
         extract_lines(img)
-# %%
