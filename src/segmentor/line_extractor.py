@@ -50,6 +50,9 @@ def get_bounding_boxes(img, max_height=250, min_area=10000):
 
 def split_bounding_box(box):
     """
+    TODO: check if box is large AND bimodal, then split on valley. 
+    Splitting only on height leads to some large single lines being split.
+    
     Just splits too large bounding box in the middle,
     might need more sophisticated method
     """
@@ -61,17 +64,24 @@ def split_bounding_box(box):
 def clean_boxes(img, box, offset):
     """
     Takes an image, bounding box and offset width as input and returns an image
-    of the bounding box without shapes introducing from other text lines
+    of the bounding box without shapes intruding from other text lines
     """
 
     img_pad = np.pad(img, ((offset, offset), (0, 0)))
     sub_img = img_pad[box.y : (box.y + 2 * offset + box.h), (box.x) : (box.x + box.w)]
 
     cv.rectangle(sub_img, (0, 0), (sub_img.shape[1], sub_img.shape[0]), 255, 1)
+
     (num_labels, labels, stats, centroids) = cv.connectedComponentsWithStats(
         sub_img, 8, cv.CV_32S
     )
-    comp_id = np.argmax(stats[1:-1, cv.CC_STAT_AREA]) + 1
+    if len(stats) > 2:
+        comp_id = np.argmax(stats[1:-1, cv.CC_STAT_AREA]) + 1
+    else: 
+        # This happens only once, seems due to bad box splitting. Might not be necessary
+        # once better splitting implemented
+        print("No components found")
+        return sub_img
 
     component_mask = (labels == comp_id).astype("uint8") * 255
     res = np.where(component_mask, 0, sub_img)
@@ -102,7 +112,7 @@ def correct_rotation(image_path, threshold):
         else:
             threshold -= 10
 
-        print(f"Changing threshold to {threshold}")
+        #print(f"Changing threshold to {threshold}")
         lines = cv.HoughLines(
             edges, 1, np.pi / 180, threshold, min_theta=0.45 * np.pi, max_theta=0.55 * np.pi
         )
@@ -154,8 +164,8 @@ def extract_lines(image_path):
     boxes = get_bounding_boxes(lines_img)
 
     for i, box in enumerate(boxes):
-        # clean = clean_boxes(img, box, 10)
-        clean = img[box.y : box.y + box.h, box.x : box.x + box.w]
+        clean = clean_boxes(img, box, 10)
+        #clean = img[box.y : box.y + box.h, box.x : box.x + box.w]
         cv.imwrite(f"lines/{file_name}_L{i}.png", cv.bitwise_not(clean))
 
 
