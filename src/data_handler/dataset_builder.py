@@ -10,6 +10,9 @@ from src.data_handler.font_images import fontImages
 
 
 class DatasetBuilder:
+    """
+    Download and organize all required data for the pipeline.
+    """
 
     load_dotenv()  # load environment variables from .env file
 

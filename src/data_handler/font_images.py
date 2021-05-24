@@ -8,7 +8,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 class fontImages:
     """
-    Creates a folder with example images for each hebrew letter using habbakuk font
+    Creates a folder with example images for each hebrew letter using habbakuk font.
     """
 
     def __init__(self) -> None:
