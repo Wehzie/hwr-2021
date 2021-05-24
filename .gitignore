@@ -143,3 +143,6 @@ data/*
 *.png
 *.jpeg
 !ARCHITECTURE.png
+
+# TODO
+TODO.md

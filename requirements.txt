@@ -1,11 +1,14 @@
+# running requirements
 numpy
 tensorflow
 keras
 python-dotenv
 opencv-python
+pillow
 
 # development and testing
 black
+isort
 flake8
 pep8-naming
 mypy

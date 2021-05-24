@@ -21,9 +21,9 @@
 Follow the [PEP8](https://www.python.org/dev/peps/pep-0008/) style guide.
 Use static typing for functions' input and output; see [gradual typing](https://www.python.org/dev/peps/pep-0483/).
 
-Install code formatter `black` to enforce PEP8, linter `flake8` and static type checker `mypy` to find possible bugs.
+Install code formatter `black` to enforce PEP8, linter `flake8` and static type checker `mypy` to find possible bugs, and `isort` to order imports.
 		
-	pip3 install black flake8 pep8-naming mypy
+	pip3 install black flake8 pep8-naming mypy isort
 
 Navigate to the project's root directory.
 
@@ -40,6 +40,12 @@ Execute `flake8` on `src` and `tests` directories.
 Execute `mypy` on `src` and `tests` directories.
 
 	mypy src/ tests/
+
+Execute `isort` on `src` and `tests` directories.
+
+	isort src/ tests/
+
+According to [PEP 518](https://www.python.org/dev/peps/pep-0518/#id26) the build system should be configured in `pyproject.toml`; unfortunately flake8 and mypy don't support this yet.
 
 ### Testing
 

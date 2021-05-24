@@ -1,5 +1,6 @@
 import glob
 import os
+
 import cv2 as cv
 import numpy as np
 from scipy import ndimage
@@ -50,9 +51,9 @@ def get_bounding_boxes(img, max_height=250, min_area=10000):
 
 def split_bounding_box(box):
     """
-    TODO: check if box is large AND bimodal, then split on valley. 
+    TODO: check if box is large AND bimodal, then split on valley.
     Splitting only on height leads to some large single lines being split.
-    
+
     Just splits too large bounding box in the middle,
     might need more sophisticated method
     """
@@ -77,7 +78,7 @@ def clean_boxes(img, box, offset):
     )
     if len(stats) > 2:
         comp_id = np.argmax(stats[1:-1, cv.CC_STAT_AREA]) + 1
-    else: 
+    else:
         # This happens only once, seems due to bad box splitting. Might not be necessary
         # once better splitting implemented
         print("No components found")
@@ -112,11 +113,15 @@ def correct_rotation(image_path, threshold):
         else:
             threshold -= 10
 
-        #print(f"Changing threshold to {threshold}")
+        # print(f"Changing threshold to {threshold}")
         lines = cv.HoughLines(
-            edges, 1, np.pi / 180, threshold, min_theta=0.45 * np.pi, max_theta=0.55 * np.pi
+            edges,
+            1,
+            np.pi / 180,
+            threshold,
+            min_theta=0.45 * np.pi,
+            max_theta=0.55 * np.pi,
         )
-
 
     hough = img.copy()
     for r, theta in lines[:, 0, :]:
@@ -156,7 +161,7 @@ def extract_lines(image_path):
     rotated_img = correct_rotation(image_path, 100)
     cv.imwrite(f"img/{file_name}_rotated.png", rotated_img)
 
-    #Threshold and invert
+    # Threshold and invert
     img = cv.threshold(rotated_img, 127, 255, cv.THRESH_BINARY)[1]
     img = cv.bitwise_not(img)
     lines_img = img.copy()
@@ -165,7 +170,7 @@ def extract_lines(image_path):
 
     for i, box in enumerate(boxes):
         clean = clean_boxes(img, box, 10)
-        #clean = img[box.y : box.y + box.h, box.x : box.x + box.w]
+        # clean = img[box.y : box.y + box.h, box.x : box.x + box.w]
         cv.imwrite(f"lines/{file_name}_L{i}.png", cv.bitwise_not(clean))
 
 
