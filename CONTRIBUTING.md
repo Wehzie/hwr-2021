@@ -18,17 +18,12 @@
 	
 ### Style
 
-- [PEP8](https://www.python.org/dev/peps/pep-0008/) enforced with 
+Follow the [PEP8](https://www.python.org/dev/peps/pep-0008/) style guide.
+Use static typing for functions' input and output; see [gradual typing](https://www.python.org/dev/peps/pep-0483/).
 
-- static type hints for functions' input/output behavior; gradual typing <https://www.python.org/dev/peps/pep-0483/>. 
-- FP; let functions be pure when easily possible
-- KISS; keep it simple stupid; no huge functions or modules; only do one thing per method or module
-- OOP; don't do Java but put all methods into appropriate classes
-- style tests that can check whether e. G. snake_case for variable names
-
-Install code formatter `black` to enforce PEP8 and linter `flake8` to find possible bugs.
+Install code formatter `black` to enforce PEP8, linter `flake8` and static type checker `mypy` to find possible bugs.
 		
-	pip3 install black flake8 pep8-naming
+	pip3 install black flake8 pep8-naming mypy
 
 Navigate to the project's root directory.
 
@@ -40,7 +35,11 @@ Execute `black` on the project's root directory.
 
 Execute `flake8` on `src` and `tests` directories.
 
-	pylint src/ tests/
+	flake8 src/ tests/
+
+Execute `mypy` on `src` and `tests` directories.
+
+	mypy src/ tests/
 
 ### Testing
 

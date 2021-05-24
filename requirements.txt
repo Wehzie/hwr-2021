@@ -7,3 +7,4 @@ python-dotenv
 black
 flake8
 pep8-naming
+mypy
