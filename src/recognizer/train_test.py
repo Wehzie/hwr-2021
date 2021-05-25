@@ -80,15 +80,8 @@ class train_test:
             self.dataset_builder.download_all_data()
             self.dataset_builder.unpack_rename_data()
             self.dataset_builder.split_data()
-        X_pretrain, y_pretrain, X_train, y_train, X_dev, y_dev, X_test, y_test = (
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
+        X_pretrain, y_pretrain, X_train, y_train, X_dev, y_dev, X_test, y_test = tuple(
+            [] for l in range(8)
         )
         img_size = (self.img_size[1], self.img_size[0])
 
@@ -138,17 +131,17 @@ class train_test:
         )
 
     def train_model(self):
-        Char_Recognizer = RecognizerModel()
-        Char_Recognizer.model = Char_Recognizer.create_model(self.img_size, 0.3)
-        Char_Recognizer.model.compile(
+        char_recognizer = RecognizerModel()
+        char_recognizer.set_model(self.img_size, 0.3)
+        char_recognizer.model.compile(
             optimizer=keras.optimizers.Adam(),
             loss=keras.losses.SparseCategoricalCrossentropy(),
             metrics=["accuracy"],
         )
-        # print(Char_Recognizer.get_summary())
+        # print(char_recognizer.get_summary())
 
         # print("pretraining on font data...")
-        # Char_Recognizer.model.fit(self.X_pretrain, self.y_pretrain) #pretraining
+        # char_recognizer.model.fit(self.X_pretrain, self.y_pretrain) #pretraining
 
         es = keras.callbacks.EarlyStopping(
             monitor="val_accuracy",
@@ -157,7 +150,7 @@ class train_test:
             min_delta=0.007,
         )
         print("training and validating on characters...")
-        Char_Recognizer.model.fit(
+        char_recognizer.model.fit(
             self.X_train,
             self.y_train,
             validation_data=(self.X_dev, self.y_dev),
@@ -165,9 +158,9 @@ class train_test:
             callbacks=[es],
         )
 
-        print(Char_Recognizer.get_summary())
+        print(char_recognizer.get_summary())
         # Confusion matrix on dev data with final model
-        y_pred = Char_Recognizer.predict(self.X_dev)
+        y_pred = char_recognizer.predict(self.X_dev)
         y_predict = np.argmax(y_pred, axis=1)
         print(
             pd.crosstab(
@@ -180,15 +173,15 @@ class train_test:
         )
 
     def test_model(self):
-        Char_Recognizer = RecognizerModel()
-        Char_Recognizer.model = Char_Recognizer.create_model(self.img_size, 0.4)
-        Char_Recognizer.model.compile(
+        char_recognizer = RecognizerModel()
+        char_recognizer.set_model(self.img_size, 0.4)
+        char_recognizer.model.compile(
             optimizer=keras.optimizers.Adam(),
             loss=keras.losses.SparseCategoricalCrossentropy(),
             metrics=["accuracy"],
         )
-        print(Char_Recognizer.get_summary())
-        Char_Recognizer.model.fit(
+        print(char_recognizer.get_summary())
+        char_recognizer.model.fit(
             self.X_train,
             self.y_train,
             validation_data=(self.X_test, self.y_test),

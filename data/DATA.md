@@ -29,6 +29,11 @@ The data loader expects the following structure of the data.
                     *.pgm   # 300*0.1 images for each Hebrew character in pgm format
                 Zayin/
                     *.pgm
+                
+        font-characters/
+            training/
+                ...
+            Habbakuk.TTF
 
         fragments/
             train/

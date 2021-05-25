@@ -1,10 +1,16 @@
 import os
+import inspect
+import sys
 import re
 import shutil
 from pathlib import Path
 
 import requests
 from dotenv import load_dotenv
+
+current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+project_root_dir = os.path.dirname(os.path.dirname(current_dir))
+sys.path.insert(0, project_root_dir)
 
 from src.data_handler.font_images import fontImages
 

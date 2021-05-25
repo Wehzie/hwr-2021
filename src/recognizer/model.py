@@ -6,20 +6,24 @@ from tensorflow.keras import layers, models
 
 
 class RecognizerModel:
+    """
+    Model for hebrew character recognition.
+    """
+
     def __init__(self):
         """
         Initializes the recognizer model.
         """
         self.model = None
 
-    def create_model(
-        self, image_size=(60, 70), drop_rate=0.3, arch="dense_net_121"
-    ) -> models.Model:
+    def set_model(
+        self, image_size: tuple=(60, 70), drop_rate: float=0.3, arch: str="dense_net_121"
+        ) -> None:
         """
         Creates the sequential CNN for character recognition
         """
 
-        def cnn_dense_net_121():
+        def cnn_dense_net_121() -> models.Model:
             """
             DenseNet121 pretrained architecture.
             """
@@ -42,7 +46,7 @@ class RecognizerModel:
             model.add(keras.layers.BatchNormalization())
             return model
 
-        def cnn_custom():
+        def cnn_custom() -> models.Model:
             """
             Custom CNN Architecture.
             """
@@ -105,7 +109,7 @@ class RecognizerModel:
                 activation="softmax",
             )
         )
-        return model
+        self.model = model
 
     def get_summary(self) -> str:
         """

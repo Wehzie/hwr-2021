@@ -13,8 +13,8 @@ class fontImages:
 
     def __init__(self) -> None:
         load_dotenv()
-        self.font_file = str(Path(os.environ["FONT_DATA"])) + "\\Habbakuk.ttf"
-        self.training_folder = Path(os.environ["FONT_DATA"] + "training")
+        self.font_file = Path(os.environ["FONT_DATA"]) / "Habbakuk.TTF"
+        self.training_folder = Path(os.environ["FONT_DATA"]) / "training"
         self.alphabet = [
             ")",
             "(",
@@ -76,7 +76,7 @@ class fontImages:
 
     def create_images(self) -> np.ndarray:
         print(self.font_file)
-        font = ImageFont.truetype(self.font_file, 45, encoding="utf-8")
+        font = ImageFont.truetype(str(self.font_file), 45, encoding="utf-8")
         if not Path.exists(self.training_folder):
             os.mkdir(self.training_folder)
         for i in range(len(self.alphabet)):
