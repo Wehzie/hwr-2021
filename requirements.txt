@@ -5,6 +5,7 @@ keras
 python-dotenv
 opencv-python
 pillow
+typed-argument-parser
 
 # development and testing
 black

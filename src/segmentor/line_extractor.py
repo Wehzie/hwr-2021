@@ -1,10 +1,18 @@
-import glob
-import os
-
 import cv2 as cv
 import numpy as np
+from pathlib import Path
 from scipy import ndimage
 from scipy.signal import find_peaks
+from tap import Tap
+
+
+class ArgParser(Tap):
+    input_dir: Path  # Directory that contains dead sea scroll pictures
+    output_dir: Path  # Directory where extracted pictures are saved
+
+    def configure(self):
+        self.add_argument("input_dir")
+        self.add_argument("output_dir")
 
 
 class BoundingBox:
@@ -15,12 +23,13 @@ class BoundingBox:
         self.h = h
 
 
-def get_bounding_boxes(img, max_height=250, min_area=10000):
+def get_bounding_boxes(img: np.ndarray, max_height=250, min_area=10000):
     """
     Takes a thresholded image and returns an array of bounding boxes.
     Bounding boxes with height smaller than max_height are split,
     boxes with area smaller than min_area are discarded.
     """
+    img = img.copy()
     proj = np.sum(img, 1)
     peaks = find_peaks(proj, prominence=np.max(proj) / 8)[0]
 
@@ -49,7 +58,7 @@ def get_bounding_boxes(img, max_height=250, min_area=10000):
     return boxes
 
 
-def split_bounding_box(box):
+def split_bounding_box(box: BoundingBox):
     """
     TODO: check if box is large AND bimodal, then split on valley.
     Splitting only on height leads to some large single lines being split.
@@ -59,19 +68,18 @@ def split_bounding_box(box):
     """
     box1 = BoundingBox(box.x, box.y, box.w, box.h // 2)
     box2 = BoundingBox(box.x, box.y + box.h // 2, box.w, box.h // 2)
-    return [box1, box2]
+    return box1, box2
 
 
-def clean_boxes(img, box, offset):
+def clean_boxes(img: np.ndarray, box: BoundingBox):
     """
     Takes an image, bounding box and offset width as input and returns an image
     of the bounding box without shapes intruding from other text lines
     """
-
+    offset = 3
     img_pad = np.pad(img, ((offset, offset), (0, 0)))
     sub_img = img_pad[box.y : (box.y + 2 * offset + box.h), (box.x) : (box.x + box.w)]
-
-    cv.rectangle(sub_img, (0, 0), (sub_img.shape[1], sub_img.shape[0]), 255, 1)
+    cv.rectangle(sub_img, (0, 0), (sub_img.shape[1], sub_img.shape[0]), 255, 2)
 
     (num_labels, labels, stats, centroids) = cv.connectedComponentsWithStats(
         sub_img, 8, cv.CV_32S
@@ -79,8 +87,8 @@ def clean_boxes(img, box, offset):
     if len(stats) > 2:
         comp_id = np.argmax(stats[1:-1, cv.CC_STAT_AREA]) + 1
     else:
-        # This happens only once, seems due to bad box splitting. Might not be necessary
-        # once better splitting implemented
+        # This happens only once, seems due to bad box splitting.
+        # Might not be necessary once better splitting implemented
         print("No components found")
         return sub_img
 
@@ -89,40 +97,11 @@ def clean_boxes(img, box, offset):
     return res
 
 
-def correct_rotation(image_path, threshold):
+def overlay_hough_lines(img: np.ndarray, lines):
     """
-    Rotate the image so the lines are (mostly) horizontal,
-    instead of (slightly) tilted.
-    TODO: Dynamically set threshold for better hough line detection in some
-     images while reducing unneccesarily high number of lines in others.
+    Add the extracted hough lines to the original image.
+    Only used for testing purposes.
     """
-    img = cv.imread(image_path, cv.IMREAD_GRAYSCALE)
-
-    if img is None:
-        print("Image not found")
-        return
-
-    edges = cv.Canny(img, 50, 200)
-    lines = cv.HoughLines(
-        edges, 1, np.pi / 180, threshold, min_theta=0.45 * np.pi, max_theta=0.55 * np.pi
-    )
-
-    while (lines is None or not (10 < len(lines) < 100)) and threshold > 10:
-        if lines is not None and len(lines) > 100:
-            threshold += 10
-        else:
-            threshold -= 10
-
-        # print(f"Changing threshold to {threshold}")
-        lines = cv.HoughLines(
-            edges,
-            1,
-            np.pi / 180,
-            threshold,
-            min_theta=0.45 * np.pi,
-            max_theta=0.55 * np.pi,
-        )
-
     hough = img.copy()
     for r, theta in lines[:, 0, :]:
         a = np.cos(theta)
@@ -137,7 +116,42 @@ def correct_rotation(image_path, threshold):
         y2 = int(y0 - 8000 * (a))
         cv.line(hough, (x1, y1), (x2, y2), (0, 0, 255), 2)
 
-    cv.imwrite(f"img/{os.path.basename(image_path)}_hough.png", hough)
+    return hough
+
+
+def correct_rotation(img: np.ndarray, hough_threshold: int):
+    """
+    Rotate the image so the lines are (mostly) horizontal,
+    instead of (slightly) tilted.
+    TODO: Dynamically set threshold for better hough line detection in some
+     images while reducing unneccesarily high number of lines in others.
+    """
+
+    edges = cv.Canny(img, 50, 200)
+    lines = cv.HoughLines(
+        edges,
+        1,
+        np.pi / 180,
+        hough_threshold,
+        min_theta=0.45 * np.pi,
+        max_theta=0.55 * np.pi,
+    )
+
+    while (lines is None or not 10 < len(lines) < 100) and hough_threshold > 10:
+        hough_threshold += 10 if lines is not None and len(lines) > 100 else -10
+
+        # print(f"Changing threshold to {threshold}")
+        lines = cv.HoughLines(
+            edges,
+            1,
+            np.pi / 180,
+            hough_threshold,
+            min_theta=0.45 * np.pi,
+            max_theta=0.55 * np.pi,
+        )
+
+    # hough_img = overlay_hough_lines(img, lines)
+    # cv.imwrite(f"img/{img_path.stem}_hough.png", hough_img)
 
     thetas = lines[:, 0, 1] - 0.5 * np.pi
     rotation = np.degrees(np.mean(thetas))
@@ -151,31 +165,41 @@ def correct_rotation(image_path, threshold):
     return ndimage.rotate(img, rotation, cval=255)
 
 
-def extract_lines(image_path):
+def extract_lines(img_path: Path, out_dir: Path):
     """
     Loads a given file from image-data and saves extracted lines
     to the lines folder
     """
 
-    file_name = os.path.basename(image_path)
-    rotated_img = correct_rotation(image_path, 100)
-    cv.imwrite(f"img/{file_name}_rotated.png", rotated_img)
+    img = cv.imread(str(img_path.resolve()), cv.IMREAD_GRAYSCALE)
+
+    if img is None:
+        print(f"Image {img_path.name} not found")
+        return
+
+    rotated_img = correct_rotation(img, 100)
 
     # Threshold and invert
     img = cv.threshold(rotated_img, 127, 255, cv.THRESH_BINARY)[1]
     img = cv.bitwise_not(img)
-    lines_img = img.copy()
 
-    boxes = get_bounding_boxes(lines_img)
+    boxes = get_bounding_boxes(img)
 
     for i, box in enumerate(boxes):
-        clean = clean_boxes(img, box, 10)
+        clean = clean_boxes(img, box)
         # clean = img[box.y : box.y + box.h, box.x : box.x + box.w]
-        cv.imwrite(f"lines/{file_name}_L{i}.png", cv.bitwise_not(clean))
+        cv.imwrite(
+            str((out_dir / f"{img_path.stem}_L{i}.png").resolve()),
+            cv.bitwise_not(clean),
+        )
 
 
 if __name__ == "__main__":
+    args = ArgParser(
+        description="Extract lines from binarized dead sea scroll pictures"
+    ).parse_args()
+
     # Change this to loop which iterates over all binary images in image_data
-    for img in glob.glob("../../data/image-data/*binarized.jpg"):
-        print(f"Processing {os.path.basename(img)}")
-        extract_lines(img)
+    for img in args.input_dir.glob("*binarized.jpg"):
+        print(f"Processing {img.name}")
+        extract_lines(img, args.output_dir)

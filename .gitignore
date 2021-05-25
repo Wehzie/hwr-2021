@@ -146,3 +146,6 @@ data/*
 
 # TODO
 TODO.md
+
+# PyCharm
+.idea
