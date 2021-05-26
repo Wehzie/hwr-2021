@@ -1,6 +1,7 @@
+from pathlib import Path
+
 import cv2 as cv
 import numpy as np
-from pathlib import Path
 from scipy import ndimage
 from scipy.signal import find_peaks
 from tap import Tap

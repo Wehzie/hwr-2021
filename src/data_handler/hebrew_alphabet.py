@@ -1,5 +1,3 @@
-
-
 class HebrewAlphabet:
     """
     All letters in the hebrew alphabet and,
@@ -17,4 +15,3 @@ class HebrewAlphabet:
     font_str: str = "),(,b,d,g,h,x,k,\\,l,m,{,n,},p,v,q,r,s,$,t,+,j,c,w,y,z"
 
     font_li: list = font_str.split(",")
-

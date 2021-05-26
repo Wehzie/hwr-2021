@@ -1,14 +1,12 @@
 import inspect
 import os
 import sys
+from glob import glob
+from pathlib import Path
 
 import cv2
 import numpy as np
 import pandas as pd
-
-from glob import glob
-from pathlib import Path
-
 from dotenv import load_dotenv
 from tensorflow import keras
 
@@ -50,7 +48,7 @@ class TrainTest:
         """
         Populate X, y data pairs for pretraining, train, dev and test sets.
         """
-        read_path = (Path(os.environ["DATA_PATH"]) / "characters")
+        read_path = Path(os.environ["DATA_PATH"]) / "characters"
         pretrain_path = Path(os.environ["FONT_DATA"] + "training")
         if not self.dataset_builder.assert_data_correct():
             self.dataset_builder.download_all_data()
@@ -157,13 +155,9 @@ class TrainTest:
         Test a trained model on the traing set (X_train, y_train).
         """
         print(self.recognizer.get_summary())
-        self.recognizer.model.evaluate(
-            self.X_test,
-            self.y_test
-        )
+        self.recognizer.model.evaluate(self.X_test, self.y_test)
 
 
 if __name__ == "__main__":
     trainer = TrainTest()
     trainer.train_model()
-

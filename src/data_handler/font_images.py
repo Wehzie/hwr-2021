@@ -1,6 +1,6 @@
-import sys
 import inspect
 import os
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -12,6 +12,7 @@ project_root_dir = os.path.dirname(os.path.dirname(current_dir))
 sys.path.insert(0, project_root_dir)
 
 from src.data_handler.hebrew_alphabet import HebrewAlphabet
+
 
 class FontImages:
     """
@@ -37,7 +38,8 @@ class FontImages:
             draw = ImageDraw.Draw(canvas)
             draw.text((10, 10), text, "black", font)
             canvas.save(
-                Path(self.training_folder / Path(self.hebrew.letter_li[i] + ".jpeg")), "JPEG"
+                Path(self.training_folder / Path(self.hebrew.letter_li[i] + ".jpeg")),
+                "JPEG",
             )
 
     def assert_data_correct(self):

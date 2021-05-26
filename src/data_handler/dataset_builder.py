@@ -1,8 +1,8 @@
-import os
 import inspect
-import sys
+import os
 import re
 import shutil
+import sys
 from pathlib import Path
 
 import requests
@@ -27,11 +27,11 @@ class DatasetBuilder:
 
     # old file name : new file name
     f_name_map = {
-            "image-data.zip": "fragments",
-            "monkbrill.tar.gz": "characters",
-            "characters_for_style_classification.zip": "character_styles",
-            "full_images_periods.zip": "fragment_styles",
-            "habbakuk.ZIP": "font_characters",
+        "image-data.zip": "fragments",
+        "monkbrill.tar.gz": "characters",
+        "characters_for_style_classification.zip": "character_styles",
+        "full_images_periods.zip": "fragment_styles",
+        "habbakuk.ZIP": "font_characters",
     }
 
     # data subset name : fraction of the entire data
@@ -41,9 +41,8 @@ class DatasetBuilder:
         "test": 0.1,
     }
 
-
     def __init__(self) -> None:
-        self.hebrew_alphabet = None     # list of hebrew characters
+        self.hebrew_alphabet = None  # list of hebrew characters
 
     def download_data(self, url: str, source_type: str) -> None:
         """
@@ -51,7 +50,7 @@ class DatasetBuilder:
         Only works with Nextcloud instances via WebDAV.
         """
 
-        r = None        # request
+        r = None  # request
 
         # download data from nextcloud
         if source_type == "nextcloud":
@@ -64,13 +63,12 @@ class DatasetBuilder:
         if source_type == "generic_url":
             s = requests.Session()
             headers = {
-                "User-Agent":
-                "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:88.0) Gecko/20100101 Firefox/88.0"
+                "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:88.0) Gecko/20100101 Firefox/88.0"
             }
             s.headers.update(headers)
             r = s.get(url)
-            
-        f_name = None   # file name
+
+        f_name = None  # file name
 
         if "content-disposition" in r.headers.keys():
             d = r.headers["content-disposition"]
@@ -92,9 +90,9 @@ class DatasetBuilder:
         """
         print("Download in progress.")
         self.download_data(os.environ["NC_TOKEN_TRAIN_CHARACTERS"], "nextcloud")
-        #self.download_data(os.environ["NC_TOKEN_TRAIN_FRAGMENTS"], "nextcloud")
-        #self.download_data(os.environ["NC_TOKEN_TRAIN_CHARACTER_STYLE"], "nextcloud")
-        #self.download_data(os.environ["NC_TOKEN_TRAIN_FRAGMENT_STYLE"], "nextcloud")
+        # self.download_data(os.environ["NC_TOKEN_TRAIN_FRAGMENTS"], "nextcloud")
+        # self.download_data(os.environ["NC_TOKEN_TRAIN_CHARACTER_STYLE"], "nextcloud")
+        # self.download_data(os.environ["NC_TOKEN_TRAIN_FRAGMENT_STYLE"], "nextcloud")
         self.download_data(os.environ["HABBAKUK_URL"], "generic_url")
         print("Download complete!")
 
@@ -110,7 +108,7 @@ class DatasetBuilder:
                 read_path = Path(os.environ["DATA_PATH"]) / old
                 write_path = Path(os.environ["DATA_PATH"]) / new
                 if "ZIP" in old:
-                    shutil.unpack_archive(read_path, write_path, "zip")    
+                    shutil.unpack_archive(read_path, write_path, "zip")
                 else:
                     shutil.unpack_archive(read_path, write_path)
                 os.remove(read_path)  # delete original file
@@ -143,7 +141,7 @@ class DatasetBuilder:
                 for image in subset[0]:
                     shutil.move(
                         Path(read_path / letter / image),
-                        Path(read_path / subset[1] / letter / image)
+                        Path(read_path / subset[1] / letter / image),
                     )
 
             os.rmdir(Path(read_path / letter))
@@ -186,10 +184,9 @@ class DatasetBuilder:
 
 if __name__ == "__main__":
     data_build = DatasetBuilder()
-    
+
     if not data_build.assert_data_correct:
         data_build.download_all_data()
         data_build.unpack_rename_data()
         data_build.split_data_characters()
         data_build.create_font_data()
-

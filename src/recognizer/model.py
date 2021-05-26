@@ -1,11 +1,11 @@
-from pathlib import Path
 import os
+from pathlib import Path
 
 import numpy as np
+from dotenv import load_dotenv
 from tensorflow import keras
 from tensorflow.keras import layers, models
 
-from dotenv import load_dotenv
 
 class RecognizerModel:
     """
@@ -21,8 +21,11 @@ class RecognizerModel:
         self.model = None
 
     def set_model(
-        self, image_size: tuple=(60, 70), drop_rate: float=0.3, arch: str="dense_net_121"
-        ) -> None:
+        self,
+        image_size: tuple = (60, 70),
+        drop_rate: float = 0.3,
+        arch: str = "dense_net_121",
+    ) -> None:
         """
         Creates the sequential CNN for character recognition
         """
