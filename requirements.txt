@@ -1,5 +1,6 @@
 # running requirements
 numpy
+pandas
 tensorflow
 keras
 python-dotenv

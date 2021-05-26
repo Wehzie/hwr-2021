@@ -85,11 +85,17 @@ we plan to use character recognition with a sliding window approach for characte
 - Preparation of Monday presentation
 - Plan to merge branches to main
 
+## 2021, May 25, Tuesday
 
-
-
-
-
-
+- TODO (Lars): send mail to have presentation on Monday at lab slot.
+- Line segmentation works quite well
+	- sometimes there are lines which have very small blobs
+- We are behind on the integration of line-segmentation and character-recognition
+	- TODO (Mark, Rafael) we need to focus on the character-segmentation; sliding window approach
+	- Due to the cleaning 
+- TODO (Rafael): character augmentation (image morphing)
+- Style classifer (Lars, Andele); what approach?
+	- Read literature
+	- Idea: segment out each character. predict each character's epoch. use the aggregated character style-classes to vote on the period of a document
 
 
