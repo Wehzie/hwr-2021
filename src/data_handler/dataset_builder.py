@@ -12,7 +12,7 @@ current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfra
 project_root_dir = os.path.dirname(os.path.dirname(current_dir))
 sys.path.insert(0, project_root_dir)
 
-from src.data_handler.font_images import fontImages
+from src.data_handler.font_images import FontImages
 
 
 class DatasetBuilder:
@@ -23,44 +23,60 @@ class DatasetBuilder:
     load_dotenv()  # load environment variables from .env file
 
     chunk_size = 128  # chunk size for downloading data
+    directory_size_characters = 27  # number of character variations in hebrew
 
-    rename_folders = {
-        "original": [
-            "image-data.zip",
-            "monkbrill.tar.gz",
-            "characters_for_style_classification.zip",
-            "full_images_periods",
-        ],
-        "new": ["fragments", "characters", "character_styles", "fragment_styles"],
+    # old file name : new file name
+    f_name_map = {
+            "image-data.zip": "fragments",
+            "monkbrill.tar.gz": "characters",
+            "characters_for_style_classification.zip": "character_styles",
+            "full_images_periods.zip": "fragment_styles",
+            "habbakuk.ZIP": "font_characters",
     }
 
+    # data subset name : fraction of the entire data
     data_split = {
         "train": 0.8,
         "dev": 0.1,
         "test": 0.1,
     }
 
-    directory_size = {
-        "characters": 27,
-    }
 
-    def __init__(self):
-        pass
+    def __init__(self) -> None:
+        self.hebrew_alphabet = None     # list of hebrew characters
 
-    def download_data_nextcloud(self, token: str):
+    def download_data(self, url: str, source_type: str) -> None:
         """
         Download data from a single URL using the requests module.
         Only works with Nextcloud instances via WebDAV.
         """
 
-        # download data
-        r = requests.get(
-            os.environ["NC_WEBDAV_URL"], auth=(token, os.environ["NC_PASSWORD"])
-        )
+        r = None        # request
 
-        # find file name
-        d = r.headers["content-disposition"]
-        f_name = re.findall('filename="(.+)"', d)[0]
+        # download data from nextcloud
+        if source_type == "nextcloud":
+            token = url
+            r = requests.get(
+                os.environ["NC_WEBDAV_URL"], auth=(token, os.environ["NC_PASSWORD"])
+            )
+
+        # download data from generic URLs
+        if source_type == "generic_url":
+            s = requests.Session()
+            headers = {
+                "User-Agent":
+                "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:88.0) Gecko/20100101 Firefox/88.0"
+            }
+            s.headers.update(headers)
+            r = s.get(url)
+            
+        f_name = None   # file name
+
+        if "content-disposition" in r.headers.keys():
+            d = r.headers["content-disposition"]
+            f_name = re.findall('filename="(.+)"', d)[0]
+        else:
+            f_name = url.split("/")[-1]
 
         # save file
         try:
@@ -70,90 +86,110 @@ class DatasetBuilder:
         except OSError:
             print(f"Error: {os.listdir(Path(os.environ['DATA_PATH']))}")
 
-    def download_all_data(self):
+    def download_all_data(self) -> None:
         """
-        Download the character-images and fragment images data.
+        Download the character-images, fragment images and font data.
         """
-        self.download_data_nextcloud(os.environ["NC_TOKEN_TRAIN_CHARACTERS"])
-        self.download_data_nextcloud(os.environ["NC_TOKEN_TRAIN_FRAGMENTS"])
-        self.download_data_nextcloud(os.environ["NC_TOKEN_TRAIN_CHARACTER_STYLE"])
-        self.download_data_nextcloud(os.environ["NC_TOKEN_TRAIN_FRAGMENT_STYLE"])
+        print("Download in progress.")
+        self.download_data(os.environ["NC_TOKEN_TRAIN_CHARACTERS"], "nextcloud")
+        #self.download_data(os.environ["NC_TOKEN_TRAIN_FRAGMENTS"], "nextcloud")
+        #self.download_data(os.environ["NC_TOKEN_TRAIN_CHARACTER_STYLE"], "nextcloud")
+        #self.download_data(os.environ["NC_TOKEN_TRAIN_FRAGMENT_STYLE"], "nextcloud")
+        self.download_data(os.environ["HABBAKUK_URL"], "generic_url")
+        print("Download complete!")
 
     def unpack_rename_data(self):
         """
         Unpack and rename image-data.zip, monkbrill.tar.gz,
-        characters_for_style_classification.zip and full_images_periods.zip.
+        characters_for_style_classification.zip, full_images_periods.zip
+        and habbakuk.ZIP.
         Then delete each original file.
         """
-        read_path = Path(os.environ["DATA_PATH"]) / self.rename_folders["original"][0]
-        write_path = Path(os.environ["DATA_PATH"]) / self.rename_folders["new"][0]
-        shutil.unpack_archive(read_path, write_path, "zip")
-        os.remove(read_path)  # delete original file
+        for old, new in self.f_name_map.items():
+            try:
+                read_path = Path(os.environ["DATA_PATH"]) / old
+                write_path = Path(os.environ["DATA_PATH"]) / new
+                if "ZIP" in old:
+                    shutil.unpack_archive(read_path, write_path, "zip")    
+                else:
+                    shutil.unpack_archive(read_path, write_path)
+                os.remove(read_path)  # delete original file
+            except OSError:
+                print(f"File doest not exist at {read_path}")
 
-        read_path = Path(os.environ["DATA_PATH"]) / self.rename_folders["original"][1]
-        write_path = Path(os.environ["DATA_PATH"]) / self.rename_folders["new"][1]
-        shutil.unpack_archive(read_path, write_path, "gztar")
-        os.remove(read_path)
+    def split_data_characters(self) -> None:
+        """
+        Split labelled character data into train, dev (validation) and test sets.
+        """
+        read_path: Path = Path(os.environ["DATA_PATH"]) / "characters"
+        letter_directories: list = os.listdir(read_path)
 
-    def split_data(self) -> None:
-        """
-        Split data into train, dev (validation) and test sets.
-        """
-        read_path = Path(os.environ["DATA_PATH"]) / self.rename_folders["new"][1]
-        letter_directories = os.listdir(read_path)
-        for data_set in self.data_split:  # train, dev, test
-            os.mkdir(Path(read_path / data_set))
+        for subset in self.data_split:  # train, dev, test
+            os.mkdir(Path(read_path / subset))
             for letter in letter_directories:
-                os.mkdir(Path(read_path / data_set / letter))
+                os.mkdir(Path(read_path / subset / letter))
+
         for letter in letter_directories:
-            images = os.listdir(Path(read_path / letter))
-            split_train = int(len(images) * self.data_split["train"])
-            split_dev = split_train + int(len(images) * self.data_split["dev"])
+            images: list = os.listdir(Path(read_path / letter))
+            split_train: int = int(len(images) * self.data_split["train"])
+            split_dev: int = split_train + int(len(images) * self.data_split["dev"])
 
-            train_images = images[:split_train]
-            dev_images = images[split_train:split_dev]
-            test_images = images[split_dev:]
+            train_images: tuple = (images[:split_train], "train")
+            dev_images: tuple = (images[split_train:split_dev], "dev")
+            test_images: tuple = (images[split_dev:], "test")
+            split_indices: list = [train_images, dev_images, test_images]
 
-            for image in train_images:
-                shutil.move(
-                    Path(read_path / letter / image),
-                    Path(read_path / "train" / letter / image),
-                )
-            for image in dev_images:
-                shutil.move(
-                    Path(read_path / letter / image),
-                    Path(read_path / "dev" / letter / image),
-                )
-            for image in test_images:
-                shutil.move(
-                    Path(read_path / letter / image),
-                    Path(read_path / "test" / letter / image),
-                )
+            for subset in split_indices:
+                for image in subset[0]:
+                    shutil.move(
+                        Path(read_path / letter / image),
+                        Path(read_path / subset[1] / letter / image)
+                    )
+
             os.rmdir(Path(read_path / letter))
 
-    def assert_data_correct(self, data_type="characters") -> bool:
+    def assert_data_characters_correct(self) -> bool:
         """
-        Assert that the data exists and is in the correct format.
+        Assert that the labelled character data exists and is in the correct format.
         """
-        read_path = Path(os.environ["DATA_PATH"]) / self.rename_folders["new"][1]
+        read_path = Path(os.environ["DATA_PATH"]) / "characters"
         if not os.path.exists(read_path):
             return False
         if set(os.listdir(read_path)) != {"train", "dev", "test"}:
             return False
-        for data_set in os.listdir(read_path):
+        for subset in os.listdir(read_path):
             if (
-                len(os.listdir(Path(read_path / data_set)))
-                != self.directory_size[data_type]
+                len(os.listdir(Path(read_path / subset)))
+                != self.directory_size_characters
             ):
                 return False
         return True
 
+    def assert_data_correct(self) -> bool:
+        """
+        Assert that all data exists and is in the correct format.
+        """
+        corr_char = self.assert_data_characters_correct()
+        print("Corr char", corr_char)
+        corr_font = FontImages().assert_data_correct()
+        print("Corr font", corr_font)
+        return True if corr_char and corr_font else False
+
     def create_font_data(self):
-        font_data = fontImages()
+        """
+        Expects data/font_characters/Habbakuk.TTF
+        """
+        font_data = FontImages()
         if not font_data.assert_data_correct():
             font_data.create_images()
 
 
 if __name__ == "__main__":
-    dataset_builder = DatasetBuilder()
-    dataset_builder.create_font_data()
+    data_build = DatasetBuilder()
+    
+    if not data_build.assert_data_correct:
+        data_build.download_all_data()
+        data_build.unpack_rename_data()
+        data_build.split_data_characters()
+        data_build.create_font_data()
+

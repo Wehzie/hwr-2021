@@ -1,14 +1,18 @@
 from pathlib import Path
+import os
 
 import numpy as np
 from tensorflow import keras
 from tensorflow.keras import layers, models
 
+from dotenv import load_dotenv
 
 class RecognizerModel:
     """
     Model for hebrew character recognition.
     """
+
+    load_dotenv()
 
     def __init__(self):
         """
@@ -123,14 +127,14 @@ class RecognizerModel:
         """
         return self.model.predict(data)
 
-    def save_model(self, model_path: Path) -> None:
+    def save_model(self, model_name: str) -> None:
         """
-        Saves the model to model_path.
+        Saves the model to the model path under the given name.
         """
-        self.model.save(model_path)
+        self.model.save(Path(os.environ["MODEL_DATA"]) / model_name)
 
-    def load_model(self, model_path: Path) -> None:
+    def load_model(self, model_name: str) -> None:
         """
-        Loads a saved model from model_path.
+        Loads a saved model from the model path under the given name.
         """
-        self.model = models.load_model(model_path, compile=False)
+        self.model = models.load_model(Path(os.environ["MODEL_DATA"]) / model_name)

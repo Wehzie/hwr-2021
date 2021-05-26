@@ -3,8 +3,12 @@
 The pipeline automatically downloads all training data.
 Ensure that the `.env` file is present in the project's root directory to make downloading from password protected sources possible.
 We use a train-dev-test split of 80%-10%-10% for all data.
-An explanation of the train-dev-test split can be found on <https://cs230.stanford.edu/blog/split/>.
-The data loader expects the following structure of the data.
+
+To load all data run the following command.
+
+    python3 src/data_handler/dataset_builder.py
+
+The data loader produces the following data structuring.
 
     data/
         characters/
@@ -30,9 +34,12 @@ The data loader expects the following structure of the data.
                 Zayin/
                     *.pgm
                 
-        font-characters/
+        font_characters/
             training/
+                Alef.jpeg
                 ...
+                Zayin.jpeg
+
             Habbakuk.TTF
 
         fragments/
