@@ -3,6 +3,7 @@ import os
 import sys
 from pathlib import Path
 
+import cv2 as cv
 import numpy as np
 from dotenv import load_dotenv
 from PIL import Image, ImageDraw, ImageFont
@@ -12,7 +13,7 @@ project_root_dir = os.path.dirname(os.path.dirname(current_dir))
 sys.path.insert(0, project_root_dir)
 
 from src.data_handler.hebrew_alphabet import HebrewAlphabet
-
+from src.data_handler.imagemorph.imagemorph import elastic_morphing
 
 class FontImages:
     """
@@ -23,6 +24,11 @@ class FontImages:
     font_file = Path(os.environ["FONT_DATA"]) / "Habbakuk.TTF"
     training_folder = Path(os.environ["FONT_DATA"]) / "training"
     hebrew = HebrewAlphabet()
+    
+    #### ELASTIC MORPHING PARAMETERS
+    amp = 0.9   # the amplitude of the deformation
+    sigma = 9   # the local image area affected (spread of the gaussian smoothing kernel)
+    repetitions = 30    # the number of morphed images produced for each character
 
     def __init__(self) -> None:
         pass
@@ -49,7 +55,25 @@ class FontImages:
             return False
         return True
 
+    def augment_data(self):
+        """
+        Repeatedly apply morphing to character images of a font.
+        """
+        for char in self.hebrew.letter_li:
+            char_path = self.training_folder / char
+            try:
+                os.mkdir(char_path)   # make directory for each character
+            except FileExistsError:
+                print(f"The folder {char_path} already exists.")
+            img = cv.imread(str(self.training_folder / char) + ".jpeg") # read font character
+            h, w, _ = img.shape                     # image height and width
+
+            for rep in range(self.repetitions):
+                res = elastic_morphing(img, self.amp, self.sigma, h, w) # morph image
+                write_path = str(char_path / char) + str(rep) + ".jpeg"
+                cv.imwrite(write_path, res) # write result to disk
 
 if __name__ == "__main__":
     font_img = FontImages()
-    font_img.create_images()
+    #font_img.create_images()
+    font_img.augment_data()

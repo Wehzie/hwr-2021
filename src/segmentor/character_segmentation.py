@@ -2,14 +2,13 @@ from pathlib import Path
 
 import os
 import cv2 as cv
-import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
 
 from dotenv import load_dotenv
 from glob import glob
 
-class Character_segmentor():
+class CharacterSegmentor():
     
     load_dotenv()
 
@@ -29,11 +28,12 @@ class Character_segmentor():
             window_size = (68,40)
             for x in range(0, image.shape[1] - window_size[1], step_size):
                 window = image[x:x + window_size[1], 0: window_size[0], :]
-                cv.rectangle(tmp, (x, 0), (x + window_size[1], window_size[0]), (255, 0, 0), 2) # draw rectangle on image
+                # draw rectangle on image
+                cv.rectangle(tmp, (x, 0), (x + window_size[1], window_size[0]), (255, 0, 0), 2)
                 plt.imshow(np.array(tmp).astype('uint8'))
             plt.savefig('boxes.png')
             break
 
 if __name__ == "__main__":
-    char_segmentor = Character_segmentor()
+    char_segmentor = CharacterSegmentor()
     char_segmentor.place_holder()
