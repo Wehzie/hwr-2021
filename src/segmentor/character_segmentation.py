@@ -2,14 +2,13 @@ from pathlib import Path
 
 import os
 import cv2 as cv
-import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
 
 from dotenv import load_dotenv
 from glob import glob
 
-class Character_segmentor():
+class CharacterSegmentor():
     
     load_dotenv()
 
@@ -35,5 +34,5 @@ class Character_segmentor():
                 break
 
 if __name__ == "__main__":
-    char_segmentor = Character_segmentor()
+    char_segmentor = CharacterSegmentor()
     char_segmentor.place_holder()
