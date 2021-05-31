@@ -26,8 +26,8 @@ class FontImages:
     hebrew = HebrewAlphabet()
     
     #### ELASTIC MORPHING PARAMETERS
-    amp = 0.9   # the amplitude of the deformation
-    sigma = 9   # the local image area affected (spread of the gaussian smoothing kernel)
+    amp = 2.5   # the amplitude of the deformation
+    sigma = 10   # the local image area affected (spread of the gaussian smoothing kernel)
     repetitions = 30    # the number of morphed images produced for each character
 
     def __init__(self) -> None:
@@ -68,8 +68,12 @@ class FontImages:
             img = cv.imread(str(self.training_folder / char) + ".jpeg") # read font character
             h, w, _ = img.shape                     # image height and width
 
+            res, res_old = np.zeros(1), np.zeros(1)
             for rep in range(self.repetitions):
-                res = elastic_morphing(img, self.amp, self.sigma, h, w) # morph image
+                # avoid duplicates: generate new image if current is same as previous
+                while np.array_equal(res, res_old):
+                    res = elastic_morphing(img, self.amp, self.sigma, h, w) # morph image
+                res_old = res
                 write_path = str(char_path / char) + str(rep) + ".jpeg"
                 cv.imwrite(write_path, res) # write result to disk
 
