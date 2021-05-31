@@ -20,19 +20,19 @@ class Character_segmentor():
     def place_holder(self):
         img_folder = "lines/"
         read_path = Path(os.environ["DATA_PATH"]) / img_folder
+        cnt = 0
         for image_path in glob(f"{read_path}/*.png"):
             image = cv.imread(image_path)
             print(image_path)
             print(image.shape)
             tmp = image
-            step_size = 40
-            window_size = (68,40)
-            for x in range(0, image.shape[1] - window_size[1], step_size):
-                window = image[x:x + window_size[1], 0: window_size[0], :]
-                cv.rectangle(tmp, (x, 0), (x + window_size[1], window_size[0]), (255, 0, 0), 2) # draw rectangle on image
-                plt.imshow(np.array(tmp).astype('uint8'))
-            plt.savefig('boxes.png')
-            break
+            step_size = 2
+            for width in [50,80,100]:
+                window_size = (image.shape[0], width)
+                for x in range(0, image.shape[1] - window_size[1], step_size):
+                    window = image[x:x + window_size[1], 0: window_size[0], :]
+                    #TODO: Feed window to CNN and see if its a letter and which
+                break
 
 if __name__ == "__main__":
     char_segmentor = Character_segmentor()
