@@ -33,7 +33,10 @@ class FontImages:
     def __init__(self) -> None:
         pass
 
-    def create_images(self) -> np.ndarray:
+    def create_images(self):
+        """
+        Write a .jpeg image for each character in the font character set.
+        """
         font = ImageFont.truetype(str(self.font_file), 45, encoding="utf-8")
         if not Path.exists(self.training_folder):
             os.mkdir(self.training_folder)
@@ -48,10 +51,15 @@ class FontImages:
                 "JPEG",
             )
 
-    def assert_data_correct(self):
+    def assert_data_correct(self) -> bool:
+        """
+        Assert that the font data exists and is in the correct format.
+        """
         if not Path.exists(self.training_folder):
             return False
-        if len(os.listdir(self.training_folder)) != 27:
+        # 27: number of characters
+        # 27*2: 27 original font characters and 27 folders with morphed version
+        if len(os.listdir(self.training_folder)) not in [27, 27*2]:
             return False
         return True
 

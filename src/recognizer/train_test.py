@@ -49,7 +49,7 @@ class TrainTest:
         Populate X, y data pairs for pretraining, train, dev and test sets.
         """
         read_path = Path(os.environ["DATA_PATH"]) / "characters"
-        pretrain_path = Path(os.environ["FONT_DATA"] + "training")
+        pretrain_path = Path(os.environ["FONT_DATA"]) / "training"
         if not self.dataset_builder.assert_data_correct():
             self.dataset_builder.download_all_data()
             self.dataset_builder.unpack_rename_data()
@@ -60,18 +60,18 @@ class TrainTest:
         )
         img_size = (self.img_size[1], self.img_size[0])
 
-        # pretraining_data
-        for i in range(len(glob(f"{pretrain_path}/*.jpeg"))):
-            img = glob(f"{pretrain_path}/*.jpeg")[i]
-            image = cv2.imread(img)
-            image = cv2.resize(image, img_size)
-            X_pretrain.append(image)
-            y_pretrain.append(i)
-
         for letter in self.hebrew.letter_li:
+            pretrain_images = glob(f'{Path(pretrain_path/letter)}/*.jpeg')
             train_images = glob(f'{Path(read_path/"train"/letter)}/*.pgm')
             dev_images = glob(f'{Path(read_path/"dev"/letter)}/*.pgm')
             test_images = glob(f'{Path(read_path/"test"/letter)}/*.pgm')
+
+            # pretrain data
+            for img in pretrain_images:
+                image = cv2.imread(img)
+                image = cv2.resize(image, img_size)
+                X_pretrain.append(image)
+                y_pretrain.append(self.hebrew.letter_li.index(letter))
 
             # training data
             for img in train_images:
@@ -118,8 +118,8 @@ class TrainTest:
         )
         # print(self.recognizer.get_summary())
 
-        # print("Pretraining on font data.")
-        # self.recognizer.model.fit(self.X_pretrain, self.y_pretrain) #pretraining
+        print("Pretraining on font data.")
+        self.recognizer.model.fit(self.X_pretrain, self.y_pretrain) #pretraining
 
         es = keras.callbacks.EarlyStopping(
             monitor="val_accuracy",

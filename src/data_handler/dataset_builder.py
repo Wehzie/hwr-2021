@@ -168,9 +168,9 @@ class DatasetBuilder:
         Assert that all data exists and is in the correct format.
         """
         corr_char = self.assert_data_characters_correct()
-        print("Corr char", corr_char)
+        print("Character data correct?", corr_char)
         corr_font = FontImages().assert_data_correct()
-        print("Corr font", corr_font)
+        print("Font data correct?", corr_font)
         return True if corr_char and corr_font else False
 
     def create_font_data(self):
