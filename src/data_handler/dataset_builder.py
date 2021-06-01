@@ -90,7 +90,7 @@ class DatasetBuilder:
         """
         print("Download in progress.")
         self.download_data(os.environ["NC_TOKEN_TRAIN_CHARACTERS"], "nextcloud")
-        # self.download_data(os.environ["NC_TOKEN_TRAIN_FRAGMENTS"], "nextcloud")
+        self.download_data(os.environ["NC_TOKEN_TRAIN_FRAGMENTS"], "nextcloud")
         # self.download_data(os.environ["NC_TOKEN_TRAIN_CHARACTER_STYLE"], "nextcloud")
         # self.download_data(os.environ["NC_TOKEN_TRAIN_FRAGMENT_STYLE"], "nextcloud")
         self.download_data(os.environ["HABBAKUK_URL"], "generic_url")
@@ -171,7 +171,62 @@ class DatasetBuilder:
         print("Character data correct?", corr_char)
         corr_font = FontImages().assert_data_correct()
         print("Font data correct?", corr_font)
-        return True if corr_char and corr_font else False
+        corr_frag = self.assert_data_fragments_correct()
+        print("Frag data correc?", corr_frag)
+        return True if corr_char and corr_font and corr_frag else False
+    
+    def split_data_fragments(self) -> None:
+        """
+        Split DSS fragments into train, dev (validation) and test sets.
+        """
+        read_path: Path = Path(os.environ["DATA_PATH"]) / "fragments"
+        try:
+            shutil.rmtree(read_path / "__MACOSX")
+        except FileNotFoundError:
+            print("Folder \"__MACOSX\" already removed.")
+        
+        for subset in self.data_split:  # make train, dev, test
+            os.mkdir(Path(read_path / subset))
+        
+        # delete non-binarized images
+        frags: list = os.listdir(read_path / "image-data")
+        frags_binarized: list = [frag for frag in frags if "binarized" in frag]
+        frags_delete: set = set(frags).difference(set(frags_binarized))
+        for frag in frags_delete:
+            os.remove(read_path / "image-data" / frag)
+        frags = frags_binarized
+
+        split_train: int = int(len(frags) * self.data_split["train"])
+        split_dev: int = split_train + int(len(frags) * self.data_split["dev"])
+
+        train_frags: tuple = (frags[:split_train], "train")
+        dev_frags: tuple = (frags[split_train:split_dev], "dev")
+        test_frags: tuple = (frags[split_dev:], "test")
+
+        split_indices: list = [train_frags, dev_frags, test_frags]
+        for subset in split_indices:
+            for fragment in subset[0]:
+                shutil.move(
+                    Path(read_path / "image-data" / fragment),
+                    Path(read_path / subset[1] / fragment),
+                )
+
+        os.rmdir(Path(read_path / "image-data"))    # delete empty folder
+        
+    def assert_data_fragments_correct(self) -> bool:
+        """
+        Assert that the fragment data exists and is in the correct format.
+        """
+        read_path = Path(os.environ["DATA_PATH"]) / "fragments"
+        if not os.path.exists(read_path):
+            return False
+        if set(os.listdir(read_path)) != {"train", "dev", "test"}:
+            return False
+        for subset in os.listdir(read_path):
+            # a file with "binarized" in the name should be in each subset
+            if "binarized" not in os.listdir(Path(read_path / subset))[0]:
+                return False
+        return True
 
     def create_font_data(self):
         """
@@ -189,4 +244,5 @@ if __name__ == "__main__":
         data_build.download_all_data()
         data_build.unpack_rename_data()
         data_build.split_data_characters()
+        data_build.split_data_fragments()
         data_build.create_font_data()

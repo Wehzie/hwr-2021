@@ -36,9 +36,12 @@ The data loader produces the following data structuring.
                 
         font_characters/
             training/
-                Alef.jpeg
-                ...
-                Zayin.jpeg
+                Alef/
+                    *.jpeg 
+                .../
+                    *.jpeg   # 30 morphed font character images for pretraining
+                Zayin/
+                    *.jpeg
 
             Habbakuk.TTF
 
@@ -49,9 +52,31 @@ The data loader produces the following data structuring.
                 ...
             test/
                 ...
+        
+        segmented_lines/
+            train/
+                fragment_1/         
+                    line_1.pgm      
+                    ...
+                    line_n.pgm      # a .pgm for each line in a fragment
+                ...
+                document_n/         # a directory for each fragment
+            dev/
+                ...
+            test/                   # train, dev, test split following the fragments
+                ...
+
+        segmented_characters/
+            ...
 
         character_styles/
             ...
 
         fragment_styles/
             ...
+
+        model/                      # trained tensorflow models
+            custom/
+                ...
+            dense_net_121/
+                ...
