@@ -149,3 +149,6 @@ TODO.md
 
 # PyCharm
 .idea
+
+# Google Colab Notebook for loading pipeline
+LOAD_COLAB.ipynb

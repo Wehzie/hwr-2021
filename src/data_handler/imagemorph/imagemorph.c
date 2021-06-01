@@ -25,6 +25,7 @@ Copyright M.Bulacu and L.Schomaker 2009,2016
 #include <string.h>
 #include <math.h>
 #include <time.h>
+#include <sys/time.h>
 #include <unistd.h>
 
 typedef struct
@@ -357,13 +358,24 @@ void rubbersheet(Pixel **input, Pixel **output, const int h, const int w,
 	free(d_y);
 }
 
+void random_seed_usec_time()
+{
+	struct timeval ct;
+	static int it;
+
+	gettimeofday(&ct, NULL);
+	it = ct.tv_sec * 1000000 + ct.tv_usec;
+	srand48((long int)it);
+	srand((unsigned int)it);
+}
+
 Pixel **elastic_morphing(Pixel **input, int h, int w, double amp, double sigma)
 {
 	Pixel **output;
 	int i;
 
 	// Seed the random number generator
-	//random_seed_usec_time();
+	random_seed_usec_time();
 
 	// Allocate the output image
 	output = (Pixel **)malloc(h * sizeof(Pixel *));
@@ -377,16 +389,3 @@ Pixel **elastic_morphing(Pixel **input, int h, int w, double amp, double sigma)
 
 	return output;
 }
-
-//void random_seed_usec_time()
-//{
-//	struct timeval ct;
-//	static int it;
-//	double r;
-//
-//	gettimeofday(&ct, NULL);
-//	it = ct.tv_sec * 1000000 + ct.tv_usec;
-//	srand48((long int)it);
-//	srand((unsigned int)it);
-//	r = drand48();
-//}
