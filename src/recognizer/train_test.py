@@ -54,6 +54,7 @@ class TrainTest:
             self.dataset_builder.download_all_data()
             self.dataset_builder.unpack_rename_data()
             self.dataset_builder.split_data_characters()
+            self.dataset_builder.split_data_fragments()
             self.dataset_builder.create_font_data()
         X_pretrain, y_pretrain, X_train, y_train, X_dev, y_dev, X_test, y_test = tuple(
             [] for l in range(8)
@@ -118,8 +119,9 @@ class TrainTest:
         )
         # print(self.recognizer.get_summary())
 
-        print("Pretraining on font data.")
-        self.recognizer.model.fit(self.X_pretrain, self.y_pretrain) #pretraining
+        #print("Pretraining on font data.")
+        #
+        # self.recognizer.model.fit(self.X_pretrain, self.y_pretrain) #pretraining
 
         es = keras.callbacks.EarlyStopping(
             monitor="val_accuracy",
@@ -161,3 +163,4 @@ class TrainTest:
 if __name__ == "__main__":
     trainer = TrainTest()
     trainer.train_model()
+    trainer.recognizer.save_model("model1")

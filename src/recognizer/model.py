@@ -113,7 +113,7 @@ class RecognizerModel:
         model.add(
             layers.Dense(
                 units=27,
-                activation="softmax",
+                activation="softmax"
             )
         )
         self.model = model

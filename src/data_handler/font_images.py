@@ -40,14 +40,18 @@ class FontImages:
         font = ImageFont.truetype(str(self.font_file), 45, encoding="utf-8")
         if not Path.exists(self.training_folder):
             os.mkdir(self.training_folder)
+        for letter in self.hebrew.letter_li:
+            os.mkdir(self.training_folder/letter)
+
         for i in range(len(self.hebrew.font_li)):
+            letter_path = self.training_folder / Path(self.hebrew.letter_li[i])
             text = self.hebrew.font_li[i]
             text_width, text_height = font.getsize(text)
             canvas = Image.new("RGB", (text_width + 15, text_height + 20), "white")
             draw = ImageDraw.Draw(canvas)
             draw.text((10, 10), text, "black", font)
             canvas.save(
-                Path(self.training_folder / Path(self.hebrew.letter_li[i] + ".jpeg")),
+                Path(letter_path/ Path(f"{len(os.listdir(letter_path))}.jpeg")),
                 "JPEG",
             )
 
