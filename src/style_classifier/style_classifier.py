@@ -1,48 +1,59 @@
-import inspect
-from pathlib import Path
 import os
-import numpy as np
-from tensorflow import keras
+import sys
 import cv2 as cv
+import numpy as np
 import pandas as pd
-from model import RecognizerModel
+
+from pathlib import Path
 from sklearn.model_selection import train_test_split
+from sklearn.utils import class_weight
 
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+from tensorflow import keras
 
-current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-project_root_dir = os.path.dirname(os.path.dirname(current_dir))
+file = Path(__file__).resolve()
+parent, project_root = file.parent, file.parents[2]
+sys.path.append(str(project_root))
 
-data_path = Path(project_root_dir) / "data/style-data"
+from src.data_handler.hebrew import HebrewAlphabet
+from src.data_handler.hebrew import HebrewStyles
+from model import StyleClassifierModel
+
+data_path = Path(project_root) / "data" / "style-data"
 
 X = []
-style_label = []
-char_label = []
-img_size = (40, 60)  # TODO: think about correct resizing method
+y = []
+img_size = (60, 40)  # TODO: think about correct resizing method
+cv_img_size = (img_size[1], img_size[0])
 
 for file_path in data_path.glob("**/*.jpg"):
-    img = cv.imread(str(file_path.resolve()), cv.IMREAD_GRAYSCALE)
-    img = cv.resize(img, img_size)
-    X.append(img)
-    char_label.append(file_path.parents[0].name.lower())
-    style_label.append(file_path.parents[1].name.lower())
+    img = cv.imread(str(file_path.resolve()), cv.IMREAD_COLOR)
+    img = cv.resize(img, cv_img_size)
+    one_hot_char = np.zeros(27)
+    one_hot_char[HebrewAlphabet.letter_li.index(file_path.parent.name)] = 1
+    X.append([img, one_hot_char])
+    y.append(HebrewStyles.style_li.index(file_path.parents[1].name))
 
 # print(np.mean([img.shape[0] for img in X]), np.mean([img.shape[1] for img in X]))
 
 X_train, X_test, y_train, y_test = train_test_split(
-    X, style_label, test_size=0.33, random_state=42
+    X, y, test_size=0.2, random_state=42
 )
 
-X_train, X_test, y_train, y_test = (np.array(x) for x in train_test_split(
-    X, style_label, test_size=0.33, random_state=42))
+# Extract the partial data from the split X_train and X_test
+X_train_img = np.array([x[0] for x in X_train])
+X_train_char = np.array([x[1] for x in X_train])
+X_test_img = np.array([x[0] for x in X_test])
+X_test_char = np.array([x[1] for x in X_test])
 
-style_model = RecognizerModel()
-style_model.set_model(img_size, 0.3)
+print("Training and validating on characters.")
+style_model = StyleClassifierModel()
+style_model.set_model(img_size, 0.5)
 style_model.model.compile(
     optimizer=keras.optimizers.Adam(),
     loss=keras.losses.SparseCategoricalCrossentropy(),
     metrics=["accuracy"],
 )
-print(style_model.get_summary())
 
 # es = keras.callbacks.EarlyStopping(
 #     monitor="val_accuracy",
@@ -50,23 +61,31 @@ print(style_model.get_summary())
 #     restore_best_weights=True,
 #     min_delta=0.007,
 # )
-print("Training and validating on characters.")
-style_model.model.fit(
-    X_train,
-    y_train,
-    validation_data=(X_test, y_test),
-    epochs=8,
-    #callbacks=[es],
+
+class_weights = dict(
+    enumerate(
+        class_weight.compute_class_weight(
+            "balanced", classes=np.unique(y_train), y=y_train
+        )
+    )
 )
 
-print(style_model.get_summary())
+# Train the model
+style_model.model.fit(
+    [X_train_img, X_train_char],
+    np.array(y_train),
+    validation_data=([X_test_img, X_test_char], np.array(y_test)),
+    epochs=10,
+    class_weight=class_weights
+    # callbacks=[es],
+)
+
 # Confusion matrix on test data with final model
-y_pred = style_model.predict(X_test)
-y_predict = np.argmax(y_pred, axis=1)
+y_pred = np.argmax(style_model.predict([X_test_img, X_test_char]), axis=1)
 print(
     pd.crosstab(
-        pd.Series(y_test),
-        pd.Series(y_predict),
+        pd.Series(HebrewStyles.style_li[y] for y in y_test),
+        pd.Series(HebrewStyles.style_li[y] for y in y_pred),
         rownames=["True:"],
         colnames=["Predicted:"],
         margins=True,

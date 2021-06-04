@@ -15,7 +15,7 @@ project_root_dir = os.path.dirname(os.path.dirname(current_dir))
 sys.path.insert(0, project_root_dir)
 
 from src.data_handler.dataset_builder import DatasetBuilder
-from src.data_handler.hebrew_alphabet import HebrewAlphabet
+from src.data_handler.hebrew import HebrewAlphabet
 from src.recognizer.model import RecognizerModel
 
 # https://www.tensorflow.org/tutorials/images/cnn
@@ -62,7 +62,7 @@ class TrainTest:
         img_size = (self.img_size[1], self.img_size[0])
 
         for letter in self.hebrew.letter_li:
-            pretrain_images = glob(f'{Path(pretrain_path/letter)}/*.jpeg')
+            pretrain_images = glob(f"{Path(pretrain_path/letter)}/*.jpeg")
             train_images = glob(f'{Path(read_path/"train"/letter)}/*.pgm')
             dev_images = glob(f'{Path(read_path/"dev"/letter)}/*.pgm')
             test_images = glob(f'{Path(read_path/"test"/letter)}/*.pgm')
@@ -119,7 +119,7 @@ class TrainTest:
         )
         # print(self.recognizer.get_summary())
 
-        #print("Pretraining on font data.")
+        # print("Pretraining on font data.")
         #
         # self.recognizer.model.fit(self.X_pretrain, self.y_pretrain) #pretraining
 

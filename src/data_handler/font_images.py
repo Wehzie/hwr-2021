@@ -12,8 +12,9 @@ current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfra
 project_root_dir = os.path.dirname(os.path.dirname(current_dir))
 sys.path.insert(0, project_root_dir)
 
-from src.data_handler.hebrew_alphabet import HebrewAlphabet
+from src.data_handler.hebrew import HebrewAlphabet
 from src.data_handler.imagemorph.imagemorph import elastic_morphing
+
 
 class FontImages:
     """
@@ -24,11 +25,13 @@ class FontImages:
     font_file = Path(os.environ["FONT_DATA"]) / "Habbakuk.TTF"
     training_folder = Path(os.environ["FONT_DATA"]) / "training"
     hebrew = HebrewAlphabet()
-    
+
     #### ELASTIC MORPHING PARAMETERS
-    amp = 2.5   # the amplitude of the deformation
-    sigma = 10   # the local image area affected (spread of the gaussian smoothing kernel)
-    repetitions = 30    # the number of morphed images produced for each character
+    amp = 2.5  # the amplitude of the deformation
+    sigma = (
+        10  # the local image area affected (spread of the gaussian smoothing kernel)
+    )
+    repetitions = 30  # the number of morphed images produced for each character
 
     def __init__(self) -> None:
         pass
@@ -41,7 +44,7 @@ class FontImages:
         if not Path.exists(self.training_folder):
             os.mkdir(self.training_folder)
         for letter in self.hebrew.letter_li:
-            os.mkdir(self.training_folder/letter)
+            os.mkdir(self.training_folder / letter)
 
         for i in range(len(self.hebrew.font_li)):
             letter_path = self.training_folder / Path(self.hebrew.letter_li[i])
@@ -51,7 +54,7 @@ class FontImages:
             draw = ImageDraw.Draw(canvas)
             draw.text((10, 10), text, "black", font)
             canvas.save(
-                Path(letter_path/ Path(f"{len(os.listdir(letter_path))}.jpeg")),
+                Path(letter_path / Path(f"{len(os.listdir(letter_path))}.jpeg")),
                 "JPEG",
             )
 
@@ -63,7 +66,7 @@ class FontImages:
             return False
         # 27: number of characters
         # 27*2: 27 original font characters and 27 folders with morphed version
-        if len(os.listdir(self.training_folder)) not in [27, 27*2]:
+        if len(os.listdir(self.training_folder)) not in [27, 27 * 2]:
             return False
         return True
 
@@ -74,22 +77,27 @@ class FontImages:
         for char in self.hebrew.letter_li:
             char_path = self.training_folder / char
             try:
-                os.mkdir(char_path)   # make directory for each character
+                os.mkdir(char_path)  # make directory for each character
             except FileExistsError:
                 print(f"The folder {char_path} already exists.")
-            img = cv.imread(str(self.training_folder / char) + ".jpeg") # read font character
-            h, w, _ = img.shape                     # image height and width
+            img = cv.imread(
+                str(self.training_folder / char) + ".jpeg"
+            )  # read font character
+            h, w, _ = img.shape  # image height and width
 
             res, res_old = np.zeros(1), np.zeros(1)
             for rep in range(self.repetitions):
                 # avoid duplicates: generate new image if current is same as previous
                 while np.array_equal(res, res_old):
-                    res = elastic_morphing(img, self.amp, self.sigma, h, w) # morph image
+                    res = elastic_morphing(
+                        img, self.amp, self.sigma, h, w
+                    )  # morph image
                 res_old = res
                 write_path = str(char_path / char) + str(rep) + ".jpeg"
-                cv.imwrite(write_path, res) # write result to disk
+                cv.imwrite(write_path, res)  # write result to disk
+
 
 if __name__ == "__main__":
     font_img = FontImages()
-    #font_img.create_images()
+    # font_img.create_images()
     font_img.augment_data()

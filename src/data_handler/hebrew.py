@@ -15,3 +15,13 @@ class HebrewAlphabet:
     font_str: str = "),(,b,d,g,h,x,k,\\,l,m,{,n,},p,v,q,r,s,$,t,+,j,c,w,y,z"
 
     font_li: list = font_str.split(",")
+
+
+class HebrewStyles:
+    """
+    Three different styles of hebrew writing
+    """
+
+    style_str: str = "Archaic,Hasmonean,Herodian"
+
+    style_li: list = style_str.split(",")

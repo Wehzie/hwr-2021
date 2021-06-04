@@ -1,18 +1,18 @@
 import os
-from pathlib import Path
-
 import numpy as np
-#from dotenv import load_dotenv
-from tensorflow import keras
+
+from dotenv import load_dotenv
+from pathlib import Path
 from tensorflow.keras import layers, models
+from tensorflow.keras.applications import DenseNet121
 
 
-class RecognizerModel:
+class StyleClassifierModel:
     """
-    Model for hebrew character recognition.
+    Model for Hebrew writing style recognition using individual characters.
     """
 
-    #load_dotenv()
+    load_dotenv()
 
     def __init__(self):
         """
@@ -34,7 +34,7 @@ class RecognizerModel:
             """
             DenseNet121 pretrained architecture.
             """
-            old_model = keras.applications.DenseNet121(
+            old_model = DenseNet121(
                 include_top=False,
                 weights="imagenet",
                 input_shape=(image_size[0], image_size[1], 3),
@@ -47,76 +47,67 @@ class RecognizerModel:
             model = models.Sequential()
 
             model.add(old_model)
-            model.add(keras.layers.Flatten())
+            model.add(layers.Flatten())
+            model.add(layers.Dropout(drop_rate))
+            model.add(layers.BatchNormalization())
 
-            model.add(keras.layers.Dropout(drop_rate))
-            model.add(keras.layers.BatchNormalization())
             return model
 
         def cnn_custom() -> models.Model:
             """
             Custom CNN Architecture.
             """
-            model = models.Sequential()
-
             # conv1
-            model.add(
-                layers.Conv2D(
-                    16,
-                    kernel_size=(3, 3),
-                    activation="relu",
-                    input_shape=(image_size[0], image_size[1], 3),
-                )
+            model = layers.Conv2D(
+                16,
+                kernel_size=(3, 3),
+                activation="relu",
+                input_shape=(image_size[0], image_size[1], 3),
             )
-            model.add(layers.MaxPooling2D((2, 2)))
-            model.add(layers.Dropout(drop_rate))
+            model = layers.MaxPooling2D((2, 2))(model)
+            model = layers.Dropout(drop_rate)(model)
 
             # conv2
-            model.add(layers.Conv2D(32, kernel_size=(3, 3), activation="relu"))
-            model.add(layers.MaxPooling2D((2, 2)))
-            model.add(layers.Dropout(drop_rate))
+            model = layers.Conv2D(32, kernel_size=(3, 3), activation="relu")(model)
+            model = layers.MaxPooling2D((2, 2))(model)
+            model = layers.Dropout(drop_rate)(model)
 
             # conv3
-            model.add(layers.Conv2D(64, kernel_size=(3, 3), activation="relu"))
-            model.add(layers.MaxPooling2D((2, 2)))
-            model.add(layers.Dropout(drop_rate))
+            model = layers.Conv2D(64, kernel_size=(3, 3), activation="relu")(model)
+            model = layers.MaxPooling2D((2, 2))(model)
+            model = layers.Dropout(drop_rate)(model)
 
             # FCL1
-            model.add(layers.Flatten())
+            model = layers.Flatten()(model)
             return model
+
+        images_input = layers.Input(shape=image_size + (3,))
 
         # selecting CNN architecture
         if arch == "custom":
-            model = cnn_custom()
+            images_model = cnn_custom()(images_input)
         else:
-            model = cnn_dense_net_121()
+            images_model = cnn_dense_net_121()(images_input)
 
-        model.add(
-            layers.Dense(
-                units=640,
-                activation="relu",
-            )
-        )
-        model.add(keras.layers.Dropout(drop_rate))
-        model.add(keras.layers.BatchNormalization())
+        images_model = layers.Dense(units=512, activation="relu")(images_model)
+        images_model = layers.Dropout(drop_rate)(images_model)
 
-        model.add(
-            layers.Dense(
-                units=160,
-                activation="relu",
-            )
-        )
-        model.add(keras.layers.Dropout(drop_rate))
-        model.add(keras.layers.BatchNormalization())
+        char_input = layers.Input(shape=(27,))
+        char_model = layers.Dense(units=128, activation="relu")(char_input)
+        char_model = layers.Dropout(drop_rate)(char_model)
+
+        merged = layers.concatenate([images_model, char_model])
+
+        merged = layers.Dense(units=512, activation="relu")(merged)
+        merged = layers.Dropout(drop_rate)(merged)
 
         # Softmax-layer (output)
-        model.add(
-            layers.Dense(
-                units=27,
-                activation="softmax",
-            )
+        output = layers.Dense(units=3, activation="softmax")(merged)
+
+        self.model = models.Model(
+            inputs=[images_input, char_input],
+            outputs=output,
         )
-        self.model = model
 
     def get_summary(self) -> str:
         """
