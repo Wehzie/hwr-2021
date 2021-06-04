@@ -200,7 +200,7 @@ if __name__ == "__main__":
         description="Extract lines from binarized dead sea scroll pictures"
     ).parse_args()
 
-    # Change this to loop which iterates over all binary images in image_data
+    # TODO: let loop iterate over all binarized images
     for img in args.input_dir.glob("*binarized.jpg"):
         print(f"Processing {img.name}")
         extract_lines(img, args.output_dir)
