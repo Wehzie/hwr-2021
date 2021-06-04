@@ -63,9 +63,9 @@ class TrainTest:
 
         for letter in self.hebrew.letter_li:
             pretrain_images = glob(f"{Path(pretrain_path/letter)}/*.jpeg")
-            train_images = glob(f'{Path(read_path/"train"/letter)}/*.pgm')
-            dev_images = glob(f'{Path(read_path/"dev"/letter)}/*.pgm')
-            test_images = glob(f'{Path(read_path/"test"/letter)}/*.pgm')
+            train_images = glob(f'{Path(read_path/"train"/letter)}/*.jpg')
+            dev_images = glob(f'{Path(read_path/"dev"/letter)}/*.jpg')
+            test_images = glob(f'{Path(read_path/"test"/letter)}/*.jpg')
 
             # pretrain data
             for img in pretrain_images:

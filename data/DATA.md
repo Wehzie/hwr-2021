@@ -14,25 +14,25 @@ The data loader produces the following data structuring.
         characters/
             train/
                 Alef/
-                    *.pgm 
+                    *.jpg
                 .../
-                    *.pgm   # 300*0.8  images for each Hebrew character in pgm format
+                    *.jpg   # 300*0.8  images for each Hebrew character in jpg format
                 Zayin/
-                    *.pgm
+                    *.jpg
             dev/
                 Alef/
-                    *.pgm 
+                    *.jpg 
                 .../
-                    *.pgm   # 300*0.1 images for each Hebrew character in pgm format
+                    *.jpg   # 300*0.1 images for each Hebrew character in jpg format
                 Zayin/
-                    *.pgm
+                    *.jpg
             test/
                 Alef/
-                    *.pgm 
+                    *.jpg 
                 .../
-                    *.pgm   # 300*0.1 images for each Hebrew character in pgm format
+                    *.jpg   # 300*0.1 images for each Hebrew character in jpg format
                 Zayin/
-                    *.pgm
+                    *.jpg
                 
         font_characters/
             training/

@@ -28,7 +28,7 @@ class DatasetBuilder:
     # old file name : new file name
     f_name_map = {
         "image-data.zip": "fragments",
-        "monkbrill.tar.gz": "characters",
+        "monkbrill-jpg.tar.gz": "characters",
         "characters_for_style_classification.zip": "character_styles",
         "full_images_periods.zip": "fragment_styles",
         "habbakuk.ZIP": "font_characters",
@@ -119,7 +119,12 @@ class DatasetBuilder:
         """
         Split labelled character data into train, dev (validation) and test sets.
         """
-        read_path: Path = Path(os.environ["DATA_PATH"]) / "characters"
+        read_path: Path = Path(os.environ["DATA_PATH"]) / "characters" 
+        character_path: Path = Path(os.environ["DATA_PATH"]) / "characters" / "monkbrill2"
+        for directory in os.listdir(character_path):
+            shutil.move(Path(character_path / directory), read_path)
+        os.rmdir(character_path)
+
         letter_directories: list = os.listdir(read_path)
 
         for subset in self.data_split:  # train, dev, test
@@ -239,8 +244,7 @@ class DatasetBuilder:
 
 if __name__ == "__main__":
     data_build = DatasetBuilder()
-
-    if not data_build.assert_data_correct:
+    if not data_build.assert_data_correct():
         data_build.download_all_data()
         data_build.unpack_rename_data()
         data_build.split_data_characters()
