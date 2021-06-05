@@ -375,7 +375,7 @@ Pixel **elastic_morphing(Pixel **input, int h, int w, double amp, double sigma)
 	int i;
 
 	// Seed the random number generator
-	random_seed_usec_time();
+	//random_seed_usec_time();
 
 	// Allocate the output image
 	output = (Pixel **)malloc(h * sizeof(Pixel *));

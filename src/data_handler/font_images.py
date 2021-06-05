@@ -54,7 +54,7 @@ class FontImages:
             draw = ImageDraw.Draw(canvas)
             draw.text((10, 10), text, "black", font)
             canvas.save(
-                Path(letter_path / Path(f"{len(os.listdir(letter_path))}.jpeg")),
+                Path(letter_path / Path(f"{self.hebrew.letter_li[i]}_original.jpeg")),
                 "JPEG",
             )
 
@@ -68,6 +68,11 @@ class FontImages:
         # 27*2: 27 original font characters and 27 folders with morphed version
         if len(os.listdir(self.training_folder)) not in [27, 27 * 2]:
             return False
+        # assert that each character folder has the expected number of images inside
+        # expected number is repetitions + original
+        for directory in os.listdir(self.training_folder):
+            if len(os.listdir(self.training_folder / directory)) != self.repetitions+1:
+                return False
         return True
 
     def augment_data(self):
@@ -76,28 +81,20 @@ class FontImages:
         """
         for char in self.hebrew.letter_li:
             char_path = self.training_folder / char
-            try:
-                os.mkdir(char_path)  # make directory for each character
-            except FileExistsError:
-                print(f"The folder {char_path} already exists.")
             img = cv.imread(
-                str(self.training_folder / char) + ".jpeg"
+                str(self.training_folder / char / f"{char}_original.jpeg")
             )  # read font character
             h, w, _ = img.shape  # image height and width
 
-            res, res_old = np.zeros(1), np.zeros(1)
             for rep in range(self.repetitions):
-                # avoid duplicates: generate new image if current is same as previous
-                while np.array_equal(res, res_old):
-                    res = elastic_morphing(
+                res = elastic_morphing(
                         img, self.amp, self.sigma, h, w
                     )  # morph image
-                res_old = res
                 write_path = str(char_path / char) + str(rep) + ".jpeg"
                 cv.imwrite(write_path, res)  # write result to disk
 
 
 if __name__ == "__main__":
     font_img = FontImages()
-    # font_img.create_images()
+    font_img.create_images()
     font_img.augment_data()

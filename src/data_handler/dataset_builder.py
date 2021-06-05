@@ -240,7 +240,7 @@ class DatasetBuilder:
         font_data = FontImages()
         if not font_data.assert_data_correct():
             font_data.create_images()
-
+            font_data.augment_data()
 
 if __name__ == "__main__":
     data_build = DatasetBuilder()
