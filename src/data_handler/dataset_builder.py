@@ -122,7 +122,7 @@ class DatasetBuilder:
         read_path: Path = Path(os.environ["DATA_PATH"]) / "characters" 
         character_path: Path = Path(os.environ["DATA_PATH"]) / "characters" / "monkbrill2"
         for directory in os.listdir(character_path):
-            shutil.move(Path(character_path / directory), read_path)
+            shutil.move(str(Path(character_path / directory)), read_path)
         os.rmdir(character_path)
 
         letter_directories: list = os.listdir(read_path)
