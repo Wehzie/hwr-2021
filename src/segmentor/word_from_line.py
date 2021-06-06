@@ -5,6 +5,7 @@ import numpy as np
 from scipy.signal import lfilter
 from tap import Tap
 
+from character_segmentation import extract_characters
 
 class ArgParser(Tap):
     input_dir: Path  # Directory that contains dead sea scroll pictures
@@ -93,11 +94,13 @@ def extract_words(img_path: Path, out_dir: Path) -> None:
     for i, box in enumerate(boxes):
         #clean = clean_boxes(img, box)
         clean = img[box.y : box.y + box.h, box.x : box.x + box.w]
+
         cv.imwrite(
             str((out_dir / f"{img_path.stem}_W{i}.png").resolve()),
             cv.bitwise_not(clean),
         )
 
+        extract_characters(cv.bitwise_not(clean), Path(out_dir / "characters"), f"{img_path.stem}_W{i}")
 
 if __name__ == "__main__":
     args = ArgParser(
@@ -108,3 +111,4 @@ if __name__ == "__main__":
     for img in args.input_dir.glob("*binarized_L*"):
         print(f"Processing {img.name}")
         extract_words(img, args.output_dir)
+
