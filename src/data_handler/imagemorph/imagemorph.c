@@ -358,6 +358,8 @@ void rubbersheet(Pixel **input, Pixel **output, const int h, const int w,
 	free(d_y);
 }
 
+// Provided by Prof. Lambert May 2021 during a lecture
+// Slow execution.
 void random_seed_usec_time()
 {
 	struct timeval ct;
@@ -374,7 +376,14 @@ Pixel **elastic_morphing(Pixel **input, int h, int w, double amp, double sigma)
 	Pixel **output;
 	int i;
 
-	// Seed the random number generator
+	/*
+	According to rand48 documentation a seed should always be set manually.
+	However, the proposed code slows down the execution by more than
+	one order of magnitude.
+	The documentation indicates that some automatic default seeding is done
+	when no seed is explicitly set.
+	Ideally, find out how to make the default behavior explicit here.
+	*/
 	//random_seed_usec_time();
 
 	// Allocate the output image
