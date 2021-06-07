@@ -1,6 +1,7 @@
 # running requirements
 numpy
 scipy
+scikit-image
 pandas
 tensorflow
 keras

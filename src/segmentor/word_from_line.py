@@ -5,8 +5,6 @@ import numpy as np
 from scipy.signal import lfilter
 from tap import Tap
 
-from character_segmentation import extract_characters
-
 class ArgParser(Tap):
     input_dir: Path  # Directory that contains dead sea scroll pictures
     output_dir: Path  # Directory where extracted pictures are saved
@@ -71,16 +69,20 @@ def get_bounding_boxes(img: np.ndarray, min_pixel=100, L=10) -> list:
             # -L because filter shifts peaks to the right
             box.w = i-box.x-L
             boxed_img = img[box.y : box.y + box.h, box.x : box.x + box.w]
-            # minimum number of non-white pixes
+            # minimum number of non-white pixels
             if np.count_nonzero(boxed_img) > min_pixel:
                 boxes.append(box)                           # add box to list
             box = BoundingBox(None, 0, None, height)    # reset box
     return boxes
 
 
-def extract_words(img_path: Path, out_dir: Path) -> None:
+def extract_words(img_path: Path, read_ord="r2l") -> list:
     """
-    Loads a line image and saves extracted words.
+    Loads a line image and returns extracted words.
+
+    img_path: Path to a line image.
+    read_ord: reading order (direction). right to left (r2l) or left to right (l2r)
+    return: A list of extracted word images.
     """
     img = cv.imread(str(img_path.resolve()), cv.IMREAD_GRAYSCALE)
     assert np.all(img) != None, f"Image {img_path.name} not found!"
@@ -89,26 +91,38 @@ def extract_words(img_path: Path, out_dir: Path) -> None:
     img = cv.threshold(img, 127, 255, cv.THRESH_BINARY)[1]
     img = cv.bitwise_not(img)
 
-    boxes = get_bounding_boxes(img)
+    boxes = get_bounding_boxes(img) # words in order left to right
+    if read_ord == "r2l":   # words in order right to left
+        boxes = reversed(boxes)
 
-    for i, box in enumerate(boxes):
-        #clean = clean_boxes(img, box)
-        clean = img[box.y : box.y + box.h, box.x : box.x + box.w]
+    w_images = []   # word images
+    for box in boxes:
+        w_images.append(img[box.y : box.y + box.h, box.x : box.x + box.w])
+    return w_images
 
+
+def write_to_file(w_images: list, l_img_name: str, out_dir: Path) -> None:
+    """
+    w_images: A list of word images.
+    l_img_name: The stem of the fiename of the line from which words are extracted.
+    out_dir: The directory to which word images are written.
+    return: None. Writes to file.
+    """
+    for i, img in enumerate(w_images):
+        out_path = Path(out_dir / (l_img_name + f"_W{i}.png"))
         cv.imwrite(
-            str((out_dir / f"{img_path.stem}_W{i}.png").resolve()),
-            cv.bitwise_not(clean),
+            str(out_path),
+            cv.bitwise_not(img),
         )
 
-        extract_characters(cv.bitwise_not(clean), Path(out_dir / "characters"), f"{img_path.stem}_W{i}")
 
 if __name__ == "__main__":
     args = ArgParser(
         description="Extract words from lines of binarized DSS images."
     ).parse_args()
 
-    # TODO: let loop iterates over all lines of all fragments
-    for img in args.input_dir.glob("*binarized_L*"):
-        print(f"Processing {img.name}")
-        extract_words(img, args.output_dir)
+    for l_img_path in args.input_dir.glob("*binarized_L*"):
+        print(f"Processing {l_img_path.name}")
+        w_images = extract_words(l_img_path)
+        write_to_file(w_images, l_img_path.stem, args.output_dir)
 
