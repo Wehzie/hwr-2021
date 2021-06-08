@@ -80,14 +80,16 @@ def extract_characters(img: np.ndarray, read_ord = "r2l") -> None:
 
     boxes = get_bounding_boxes(img)
 
-    #if read_ord == "r2l":   # words in order right to left
-    #    boxes = reversed(boxes)
+    if read_ord == "r2l":   # words in order right to left
+        boxes = reversed(boxes)
 
     characters = []
     for i, box in enumerate(boxes):
         #clean = clean_boxes(img, box)
         clean = img[box.y : box.y + box.h, box.x : box.x + box.w]
-        characters.append(cv.bitwise_not(clean))
+        inversed = cv.bitwise_not(clean)
+        if box.w > 16:
+            characters.append(inversed)
         #cv.imwrite(
         #    str((out_dir / f"{path_stem}c{i}.png").resolve()),
         #    cv.bitwise_not(clean),
@@ -124,5 +126,5 @@ if __name__ == "__main__":
                 chars = extract_characters(word)
                 for z in range(len(chars)):
                     char = chars[z]
+                    #print(np.sum(char), i,j,z, char.shape)
                     cv.imwrite(f"{character_path}/characterL{i}_W{j}_C{z}.png", char)
-
