@@ -57,55 +57,59 @@ class StyleClassifierModel:
             """
             Custom CNN Architecture.
             """
+
+            model = models.Sequential()
+
             # conv1
-            model = layers.Conv2D(
-                16,
-                kernel_size=(3, 3),
-                activation="relu",
-                input_shape=(image_size[0], image_size[1], 3),
+            model.add(
+                layers.Conv2D(
+                    16,
+                    kernel_size=(3, 3),
+                    activation="relu",
+                    input_shape=(image_size[0], image_size[1], 3),
+                )
             )
-            model = layers.MaxPooling2D((2, 2))(model)
-            model = layers.Dropout(drop_rate)(model)
+            model.add(layers.MaxPooling2D((2, 2)))
+            model.add(layers.Dropout(drop_rate))
 
             # conv2
-            model = layers.Conv2D(32, kernel_size=(3, 3), activation="relu")(model)
-            model = layers.MaxPooling2D((2, 2))(model)
-            model = layers.Dropout(drop_rate)(model)
+            model.add(layers.Conv2D(32, kernel_size=(3, 3), activation="relu"))
+            model.add(layers.MaxPooling2D((2, 2)))
+            model.add(layers.Dropout(drop_rate))
 
             # conv3
-            model = layers.Conv2D(64, kernel_size=(3, 3), activation="relu")(model)
-            model = layers.MaxPooling2D((2, 2))(model)
-            model = layers.Dropout(drop_rate)(model)
+            model.add(layers.Conv2D(64, kernel_size=(3, 3), activation="relu"))
+            model.add(layers.MaxPooling2D((2, 2)))
+            model.add(layers.Dropout(drop_rate))
 
             # FCL1
-            model = layers.Flatten()(model)
+            model.add(layers.Flatten())
+            model.add(layers.Dropout(drop_rate))
+            model.add(layers.BatchNormalization())
+
             return model
 
-        images_input = layers.Input(shape=image_size + (3,))
+        image_input = layers.Input(shape=image_size + (3,))
 
         # selecting CNN architecture
         if arch == "custom":
-            images_model = cnn_custom()(images_input)
+            model = cnn_custom()(image_input)
         else:
-            images_model = cnn_dense_net_121()(images_input)
+            model = cnn_dense_net_121()(image_input)
 
-        images_model = layers.Dense(units=512, activation="relu")(images_model)
-        images_model = layers.Dropout(drop_rate)(images_model)
+        model = layers.Dense(units=512, activation="relu")(model)
+        model = layers.Dropout(drop_rate)(model)
+        model = layers.BatchNormalization()(model)
 
-        char_input = layers.Input(shape=(27,))
-        char_model = layers.Dense(units=128, activation="relu")(char_input)
-        char_model = layers.Dropout(drop_rate)(char_model)
-
-        merged = layers.concatenate([images_model, char_model])
-
-        merged = layers.Dense(units=512, activation="relu")(merged)
-        merged = layers.Dropout(drop_rate)(merged)
+        model = layers.Dense(units=256, activation="relu")(model)
+        model = layers.Dropout(drop_rate)(model)
+        model = layers.BatchNormalization()(model)
 
         # Softmax-layer (output)
-        output = layers.Dense(units=3, activation="softmax")(merged)
+        output = layers.Dense(units=3, activation="softmax")(model)
 
         self.model = models.Model(
-            inputs=[images_input, char_input],
+            inputs=image_input,
             outputs=output,
         )
 

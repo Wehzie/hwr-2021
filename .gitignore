@@ -149,3 +149,6 @@ TODO.md
 
 # PyCharm
 .idea
+
+# Pickled data files
+*.pkl
