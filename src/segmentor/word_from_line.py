@@ -76,7 +76,7 @@ def get_bounding_boxes(img: np.ndarray, min_pixel=100, L=10) -> list:
     return boxes
 
 
-def extract_words(img_path: Path, read_ord="r2l") -> list:
+def extract_words(img, read_ord="r2l") -> list:
     """
     Loads a line image and returns extracted words.
 
@@ -84,7 +84,6 @@ def extract_words(img_path: Path, read_ord="r2l") -> list:
     read_ord: reading order (direction). right to left (r2l) or left to right (l2r)
     return: A list of extracted word images.
     """
-    img = cv.imread(str(img_path.resolve()), cv.IMREAD_GRAYSCALE)
     assert np.all(img) != None, f"Image {img_path.name} not found!"
 
     # Threshold and invert
@@ -97,7 +96,7 @@ def extract_words(img_path: Path, read_ord="r2l") -> list:
 
     w_images = []   # word images
     for box in boxes:
-        w_images.append(img[box.y : box.y + box.h, box.x : box.x + box.w])
+        w_images.append(cv.bitwise_not(img[box.y : box.y + box.h, box.x : box.x + box.w]))
     return w_images
 
 

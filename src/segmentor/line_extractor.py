@@ -166,7 +166,7 @@ def correct_rotation(img: np.ndarray, hough_threshold: int):
     return ndimage.rotate(img, rotation, cval=255)
 
 
-def extract_lines(img_path: Path, out_dir: Path):
+def extract_lines(img_path: Path):
     """
     Loads a given file from image-data and saves extracted lines
     to the lines folder
@@ -186,13 +186,16 @@ def extract_lines(img_path: Path, out_dir: Path):
 
     boxes = get_bounding_boxes(img)
 
+    L_images = []
     for i, box in enumerate(boxes):
         clean = clean_boxes(img, box)
         # clean = img[box.y : box.y + box.h, box.x : box.x + box.w]
-        cv.imwrite(
-            str((out_dir / f"{img_path.stem}_L{i}.png").resolve()),
-            cv.bitwise_not(clean),
-        )
+        L_images.append(cv.bitwise_not(clean))
+        #cv.imwrite(
+        #    str((out_dir / f"{img_path.stem}_L{i}.png").resolve()),
+        #    cv.bitwise_not(clean),
+        #)
+    return L_images
 
 
 if __name__ == "__main__":

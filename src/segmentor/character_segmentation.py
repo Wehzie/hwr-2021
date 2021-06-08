@@ -2,10 +2,22 @@ from pathlib import Path
 
 import cv2 as cv
 import numpy as np
+import os
 from scipy.signal import lfilter
 from scipy import ndimage
 from skimage.morphology import skeletonize
 from tap import Tap
+
+from word_from_line import extract_words
+from line_extractor import extract_lines
+
+class ArgParser(Tap):
+    input_dir: Path  # Directory that contains dead sea scroll pictures
+    output_dir: Path  # Directory where extracted characters are saved
+
+    def configure(self):
+        self.add_argument("input_dir")
+        self.add_argument("output_dir")
 
 class BoundingBox:
     def __init__(self, x: int, y: int, w: int, h: int):
@@ -17,7 +29,7 @@ class BoundingBox:
     def __str__(self) -> str:
         return f"x:{self.x}, y:{self.y}, w:{self.w}, h:{self.h}"
 
-def get_bounding_boxes(img: np.ndarray, min_pixel=100) -> list:
+def get_bounding_boxes(img: np.ndarray, min_pixel=120) -> list:
     """
     img: word image
     min_pixel: minimum amount of ink in a word
@@ -57,7 +69,7 @@ def get_bounding_boxes(img: np.ndarray, min_pixel=100) -> list:
     return boxes
 
 
-def extract_characters(img: np.ndarray, out_dir: Path, path_stem: Path) -> None:
+def extract_characters(img: np.ndarray, read_ord = "r2l") -> None:
     """
     Loads a word image and returns extracted characters.
     """
@@ -68,18 +80,49 @@ def extract_characters(img: np.ndarray, out_dir: Path, path_stem: Path) -> None:
 
     boxes = get_bounding_boxes(img)
 
+    #if read_ord == "r2l":   # words in order right to left
+    #    boxes = reversed(boxes)
+
+    characters = []
     for i, box in enumerate(boxes):
         #clean = clean_boxes(img, box)
         clean = img[box.y : box.y + box.h, box.x : box.x + box.w]
-        cv.imwrite(
-            str((out_dir / f"{path_stem}c{i}.png").resolve()),
-            cv.bitwise_not(clean),
-        )
-
+        characters.append(cv.bitwise_not(clean))
+        #cv.imwrite(
+        #    str((out_dir / f"{path_stem}c{i}.png").resolve()),
+        #    cv.bitwise_not(clean),
+        #)
+    return characters
 
 if __name__ == "__main__":
-    input_dir = Path("data/words/")
-    output_dir = Path("data/segmented_chars/")
-    for img in input_dir.glob("*binarized_L*"):
+    args = ArgParser(
+        description="Extract characters from binarized dead sea scroll pictures"
+    ).parse_args()
+
+    # Extract lines
+    for img in args.input_dir.glob("*binarized.jpg"): # For each fragment
         print(f"Processing {img.name}")
-        extract_characters(img, output_dir)
+        
+        img_path = str((args.input_dir / f"{img.name}").resolve())
+        fragment_path =  str((args.output_dir / f"{img.name}").resolve())[:-4]
+        character_path = fragment_path + "/" + "characters"
+        os.mkdir(fragment_path)
+        os.mkdir(character_path)
+
+        image = cv.imread(img_path)
+
+        cv.imwrite(fragment_path + "/" + f"{img.name}", image)
+        lines = extract_lines(img)
+        
+        for i in range(len(lines)): # Extract words
+            line = lines[i]
+            cv.imwrite(f"{fragment_path}/line{i}.png", line)
+            words = extract_words(line)
+
+            for j in range(len(words)): # Extract characters
+                word = words[j]
+                chars = extract_characters(word)
+                for z in range(len(chars)):
+                    char = chars[z]
+                    cv.imwrite(f"{character_path}/characterL{i}_W{j}_C{z}.png", char)
+
