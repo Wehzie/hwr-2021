@@ -20,23 +20,32 @@ from src.data_handler.hebrew import HebrewStyles
 if __name__ == "__main__":
 
     data_path = Path(project_root) / "data" / "style-data"
-    chars = []
+    imgs = []
     true_style = []
-    counter = 0
     for file_path in data_path.glob("**/*.jpg"):
-        if file_path.parents[1].name == "Herodian" and counter < 150:
             img = cv.imread(str(file_path.resolve()), cv.IMREAD_COLOR)
             img = cv.resize(img, cv_img_size)
-            chars.append(img)
+            imgs.append(img)
             true_style.append(HebrewStyles.style_li.index(file_path.parents[1].name))
-            counter += 1
+
+    imgs = np.array(imgs)
+    true_style = np.array(true_style)
+
+    #if file_path.parents[1].name == "Herodian" and counter < 150:
+
+    test_idx = np.load("data/model/style-classifier/test_indices.npy")
+    imgs = imgs[test_idx]
+    true_style = true_style[test_idx]
 
     style_model = StyleClassifierModel()
     style_model.load_model("style-classifier")
-    preds_sum = np.sum(style_model.predict(np.array(chars)), axis=0)
-    style_pred = np.argmax(preds_sum)
 
-    #print(HebrewStyles.style_li[style_pred])
-    counts = pd.Series(true_style).value_counts(ascending=True)
-    print(f"Prediction: {style_pred} with {preds_sum} confidence")
-    print(f"Real count: {counts}")
+    for style in range(3):
+        sub_imgs = imgs[np.where(true_style == style)]
+        sub_true_style = true_style[np.where(true_style == style)]
+
+        preds_sum = np.sum(style_model.predict(np.array(sub_imgs)), axis=0)
+        style_pred = np.argmax(preds_sum)
+
+        #print(HebrewStyles.style_li[style_pred])
+        print(f"Style {style} predicted as {style_pred} with {preds_sum} confidence, {len(sub_imgs)} characters used.")

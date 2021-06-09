@@ -6,7 +6,7 @@ import pandas as pd
 
 from matplotlib import pyplot as plt
 from pathlib import Path
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.utils import class_weight
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
@@ -43,18 +43,18 @@ def main():
         X.append((img, file_path.parent.name))
         y.append(HebrewStyles.style_li.index(file_path.parents[1].name))
 
-    # print(np.mean([img.shape[0] for img in X]), np.mean([img.shape[1] for img in X]))
+    y = np.array(y)
+    X_img = np.array([x[0] for x in X])
+    X_char = np.array([x[1] for x in X])
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42, stratify=y
-    )
+    strat_split = StratifiedShuffleSplit(n_splits=1, test_size=0.33)
+    for train_index, test_index in strat_split.split(X, y):
+        X_train_img, X_test_img = X_img[train_index], X_img[test_index]
+        X_train_char, X_test_char = X_char[train_index], X_char[test_index]
+        y_train, y_test = y[train_index], y[test_index]
+        test_idx = test_index
 
-    X_train_img = np.array([x[0] for x in X_train])
-    X_train_char = np.array([x[1] for x in X_train])
-    X_test_img = np.array([x[0] for x in X_test])
-    X_test_char = np.array([x[1] for x in X_test])
-    y_train = np.array(y_train)
-    y_test = np.array(y_test)
+    np.save("data/model/style-classifier/test_indices", np.array(test_idx))
 
     print("Training and validating on characters.")
     style_model = StyleClassifierModel()
@@ -65,12 +65,12 @@ def main():
         metrics=["accuracy"],
     )
 
-    # es = keras.callbacks.EarlyStopping(
-    #     monitor="val_accuracy",
-    #     patience=2,
-    #     restore_best_weights=True,
-    #     min_delta=0.007,
-    # )
+    es = keras.callbacks.EarlyStopping(
+        monitor="val_accuracy",
+        patience=2,
+        restore_best_weights=True,
+        min_delta=0.007,
+    )
 
     class_weights = dict(
         enumerate(
@@ -86,9 +86,11 @@ def main():
         y_train,
         validation_data=(X_test_img, y_test),
         epochs=25,
-        class_weight=class_weights
-        # callbacks=[es],
+        class_weight=class_weights,
+        callbacks=[es],
     )
+
+    #style_model.save_model("style-classifier")
 
     plot_history(history)
 
