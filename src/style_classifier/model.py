@@ -14,7 +14,7 @@ class StyleClassifierModel:
 
     load_dotenv()
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Initializes the recognizer model.
         """
@@ -27,7 +27,7 @@ class StyleClassifierModel:
         arch: str = "dense_net_121",
     ) -> None:
         """
-        Creates the sequential CNN for character recognition
+        Creates the sequential CNN for character recognition.
         """
 
         def cnn_dense_net_121() -> models.Model:
@@ -127,12 +127,22 @@ class StyleClassifierModel:
 
     def save_model(self, model_name: str) -> None:
         """
-        Saves the model to the model path under the given name.
+        Saves the model to the style model path under the given name.
         """
-        self.model.save(Path(os.environ["MODEL_DATA"]) / model_name)
+        if "STYLE_MODEL_DATA" in os.environ:
+            print("Cannot find STYLE_MODEL_DATA environment variable")
+            exit(1)
+
+        self.model.save(Path(os.environ["STYLE_MODEL_DATA"]) / model_name)
 
     def load_model(self, model_name: str) -> None:
         """
-        Loads a saved model from the model path under the given name.
+        Loads a saved model from the style model path under the given name.
         """
-        self.model = models.load_model(Path(os.environ["MODEL_DATA"]) / model_name)
+        if "STYLE_MODEL_DATA" in os.environ:
+            print("Cannot find STYLE_MODEL_DATA environment variable")
+            exit(1)
+
+        self.model = models.load_model(
+            Path(os.environ["STYLE_MODEL_DATA"]) / model_name
+        )
