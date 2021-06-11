@@ -2,6 +2,7 @@
 numpy
 scipy
 scikit-image
+sklearn
 pandas
 tensorflow
 keras

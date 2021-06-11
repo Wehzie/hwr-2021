@@ -99,3 +99,19 @@ we plan to use character recognition with a sliding window approach for characte
 	- Idea: segment out each character. predict each character's epoch. use the aggregated character style-classes to vote on the period of a document
 
 
+## 2021, June 9, Wednesday
+
+- Andele, Lars: Style classifier works quite well
+- TODOS
+	1. Character segmentation
+		- split connected characters
+		- (Rafael) connectivity analysis for non-connected characters (e.g. trumpets)
+		- (Mark) dismiss non-characters
+		- size processing (reducing whitespace)
+	2. (Lars) Transcription: Writing output in Hebrew font
+	3. (Andele) Implementing plots and analysis for recognition
+	4. (Lars) Shared report (Methods, Results)
+	5. (Andele) Clean code.
+		- Formally docstring >10LOC functions
+		- Comments
+
