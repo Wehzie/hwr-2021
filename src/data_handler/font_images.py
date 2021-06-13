@@ -72,7 +72,8 @@ class FontImages:
         # expected number is repetitions + original
         for directory in os.listdir(self.training_folder):
             if len(os.listdir(self.training_folder / directory)) != self.repetitions+1:
-                return False
+                if len(os.listdir(self.training_folder / directory)) != 1: # in case of no character morphing
+                    return False
         return True
 
     def augment_data(self):
@@ -97,4 +98,7 @@ class FontImages:
 if __name__ == "__main__":
     font_img = FontImages()
     font_img.create_images()
-    font_img.augment_data()
+    try:
+        font_img.augment_data()
+    except:
+        pass

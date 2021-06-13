@@ -48,8 +48,8 @@ class TrainTest:
         """
         Populate X, y data pairs for pretraining, train, dev and test sets.
         """
-        read_path = Path(os.environ["DATA_PATH"]) / "characters"
-        pretrain_path = Path(os.environ["FONT_DATA"]) / "training"
+        self.read_path = Path(os.environ["DATA_PATH"]) / "characters"
+        self.pretrain_path = Path(os.environ["FONT_DATA"]) / "training"
         if not self.dataset_builder.assert_data_correct():
             self.dataset_builder.download_all_data()
             self.dataset_builder.unpack_rename_data()
@@ -62,10 +62,10 @@ class TrainTest:
         img_size = (self.img_size[1], self.img_size[0])
 
         for letter in self.hebrew.letter_li:
-            pretrain_images = glob(f"{Path(pretrain_path/letter)}/*.jpeg")
-            train_images = glob(f'{Path(read_path/"train"/letter)}/*.jpg')
-            dev_images = glob(f'{Path(read_path/"dev"/letter)}/*.jpg')
-            test_images = glob(f'{Path(read_path/"test"/letter)}/*.jpg')
+            pretrain_images = glob(f"{Path(self.pretrain_path/letter)}/*.jpeg")
+            train_images = glob(f'{Path(self.read_path/"train"/letter)}/*.jpg')
+            dev_images = glob(f'{Path(self.read_path/"dev"/letter)}/*.jpg')
+            test_images = glob(f'{Path(self.read_path/"test"/letter)}/*.jpg')
 
             # pretrain data
             for img in pretrain_images:
@@ -117,11 +117,12 @@ class TrainTest:
             loss=keras.losses.SparseCategoricalCrossentropy(),
             metrics=["accuracy"],
         )
-        # print(self.recognizer.get_summary())
 
-        # print("Pretraining on font data.")
-        #
-        # self.recognizer.model.fit(self.X_pretrain, self.y_pretrain) #pretraining
+        font_chars = os.listdir(self.read_path/"train"/"Alef")
+        if len(font_chars) == 27:
+        # print(self.recognizer.get_summary())
+            print("Pretraining on font data.")
+            self.recognizer.model.fit(self.X_pretrain, self.y_pretrain) #pretraining
 
         es = keras.callbacks.EarlyStopping(
             monitor="val_accuracy",
