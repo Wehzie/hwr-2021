@@ -59,7 +59,6 @@ class TrainTest:
         X_pretrain, y_pretrain, X_train, y_train, X_dev, y_dev, X_test, y_test = tuple(
             [] for l in range(8)
         )
-        img_size = (self.img_size[1], self.img_size[0])
 
         for letter in self.hebrew.letter_li:
             pretrain_images = glob(f"{Path(self.pretrain_path/letter)}/*.jpeg")
@@ -70,28 +69,28 @@ class TrainTest:
             # pretrain data
             for img in pretrain_images:
                 image = cv2.imread(img)
-                image = cv2.resize(image, img_size)
+                image = cv2.resize(image, self.img_size)
                 X_pretrain.append(image)
                 y_pretrain.append(self.hebrew.letter_li.index(letter))
 
             # training data
             for img in train_images:
                 image = cv2.imread(img)
-                image = cv2.resize(image, img_size)
+                image = cv2.resize(image, self.img_size)
                 X_train.append(image)
                 y_train.append(self.hebrew.letter_li.index(letter))
 
             # dev data
             for img in dev_images:
                 image = cv2.imread(img)
-                image = cv2.resize(image, img_size)
+                image = cv2.resize(image, self.img_size)
                 X_dev.append(image)
                 y_dev.append(self.hebrew.letter_li.index(letter))
 
             # test data
             for img in test_images:
                 image = cv2.imread(img)
-                image = cv2.resize(image, img_size)
+                image = cv2.resize(image, self.img_size)
                 X_test.append(image)
                 y_test.append(self.hebrew.letter_li.index(letter))
 
@@ -111,7 +110,7 @@ class TrainTest:
         Train on training set (X_train, y_train) and
         validate on dev set (X_dev, y_dev).
         """
-        self.recognizer.set_model(self.img_size, 0.3)
+        self.recognizer.set_model((self.img_size[1],self.img_size[0]), 0.3)
         self.recognizer.model.compile(
             optimizer=keras.optimizers.Adam(),
             loss=keras.losses.SparseCategoricalCrossentropy(),

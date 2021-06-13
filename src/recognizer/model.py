@@ -22,7 +22,7 @@ class RecognizerModel:
 
     def set_model(
         self,
-        image_size: tuple = (60, 70),
+        image_size: tuple = (70, 60),
         drop_rate: float = 0.3,
         arch: str = "dense_net_121",
     ) -> None:
