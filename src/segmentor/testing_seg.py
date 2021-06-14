@@ -5,6 +5,7 @@ import cv2 as cv
 import numpy as np
 from dotenv import load_dotenv
 from PIL import Image, ImageDraw, ImageFont
+from natsort import os_sorted
 from numpy.lib.function_base import place
 from tap import Tap
 from tensorflow import keras
@@ -31,7 +32,7 @@ class seg_tester():
     def load_images(self, input_dir) -> np.array:
         character_images = []
         image_paths = []
-        for img_path in input_dir.glob("*.png"):
+        for img_path in os_sorted(input_dir.glob("*.png")):
             image_paths.append(img_path)
             print(f"Processing {img_path.name}")
             img = cv.imread(str(img_path))
@@ -54,5 +55,5 @@ if __name__ == "__main__":
         name = paths[i]
         output = testing.recognizer.predict(input[i])
         print(name, np.argmax(output, axis=1))
-        if output[0][np.argmax(output, axis=1)[0]] < 0.4:
-            print(output)
+        print(output, sorted(output[0], reverse = True)[:4])
+    print(len(input))
