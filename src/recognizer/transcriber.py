@@ -49,7 +49,7 @@ if __name__ == "__main__":
     ).parse_args()
 
     transcriber = Transcriber()
-    paths, input = transcriber.load_images(args.input_dir)
+    paths, input = transcriber.load_images(Path(args.input_dir).name)
 
     current_line, current_word = 0, 0
     file = open(f"{args.input_dir}_characters.docx", "w") # Check if this is full path or name
