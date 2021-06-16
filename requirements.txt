@@ -10,6 +10,7 @@ python-dotenv
 opencv-python
 pillow
 typed-argument-parser
+natsort
 
 # development and testing
 black
