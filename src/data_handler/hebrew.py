@@ -16,6 +16,37 @@ class HebrewAlphabet:
 
     font_li: list = font_str.split(",")
 
+    unicode_dict = {
+        "Alef": u"\u05D0",
+        "Ayin": u"\u05E2",
+        "Bet": u"\u05D1",
+        "Dalet": u"\u05D3",
+        "Gimel": u"\u05D2",
+        "He": u"\u05D4",
+        "Het": u"\u05D7",
+        "Kaf": u"\u05DB",
+        "Kaf-final": u"\u05DA",
+        "Lamed": u"\u05DC",
+        "Mem": u"\u05DD", # This if Mem-Final, check
+        "Mem-medial": u"\u05DE",
+        "Nun-final": u"\u05DF",
+        "Nun-medial": u"\u05E0", # This is Nun
+        "Pe": u"\u05E4",
+        "Pe-final": u"\u05E3",
+        "Qof": u"\u05E7",
+        "Resh": u"\u05E8",
+        "Samekh": u"\u05E1",
+        "Shin": u"\u05E9",
+        "Taw": u"\u05EA",
+        "Tet": u"\u05D8",
+        "Tsadi-final": u"\u05E5",
+        "Tsadi-medial": u"\u05E6", # This is Tsadi
+        "Waw": u"\u05D5",
+        "Yod": u"\u05D9",
+        "Zayin": u"\u05D6"
+    }
+
+
 
 class HebrewStyles:
     """
