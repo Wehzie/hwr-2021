@@ -1,58 +1,60 @@
-import inspect, os, sys
+import sys
 from pathlib import Path
+from typing import List, Tuple
 
 import cv2 as cv
 import numpy as np
-from dotenv import load_dotenv
-from PIL import Image, ImageDraw, ImageFont
 from natsort import os_sorted
-from numpy.lib.function_base import place
 from tap import Tap
-from tensorflow import keras
 
-current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-project_root_dir = os.path.dirname(os.path.dirname(current_dir))
-sys.path.insert(0, project_root_dir)
+sys.path.append(str(Path(__file__).parents[2].resolve()))
 
 from src.recognizer.model import RecognizerModel
 from src.data_handler.hebrew import HebrewAlphabet as Hebrew
 
 
 class ArgParser(Tap):
+    """Argument parser for the transcriber."""
+
     input_dir: Path  # Directory with character images
 
-    def configure(self):
+    def configure(self) -> None:
+        """Configure the argument parser."""
         self.add_argument("input_dir")
 
-class Transcriber():
+
+class Transcriber:
+    """Transcriber from extracted characters to a text file."""
 
     def __init__(self) -> None:
+        """Initialize the transcriber."""
         self.recognizer = RecognizerModel()
         self.recognizer.load_model("model1")
 
-    def load_images(self, input_dir) -> np.array:
+    def load_images(self, input_dir: Path) -> Tuple[List[Path], List[np.ndarray]]:
+        """Load images from the input directory."""
         character_images = []
         image_paths = []
         for img_path in os_sorted(input_dir.glob("*.png")):
             image_paths.append(img_path)
             print(f"Processing {img_path.name}")
             img = cv.imread(str(img_path))
-            img = cv.resize(img, (60,70))
-            img = np.expand_dims(img, axis = 0)
+            img = cv.resize(img, (60, 70))
+            img = np.expand_dims(img, axis=0)
             character_images.append(img)
         return image_paths, character_images
 
 
 if __name__ == "__main__":
-    args = ArgParser(
-        description="Input directory with character images"
-    ).parse_args()
+    args = ArgParser(description="Input directory with character images").parse_args()
 
     transcriber = Transcriber()
     paths, input = transcriber.load_images(Path(args.input_dir).name)
 
     current_line, current_word = 0, 0
-    file = open(f"{args.input_dir}_characters.docx", "w") # Check if this is full path or name
+    file = open(
+        f"{args.input_dir}_characters.docx", "w"
+    )  # Check if this is full path or name
 
     for i in range(len(input)):
         file_name = paths[i].name

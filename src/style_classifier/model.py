@@ -8,16 +8,12 @@ from tensorflow.keras.applications import DenseNet121
 
 
 class StyleClassifierModel:
-    """
-    Model for Hebrew writing style recognition using individual characters.
-    """
+    """Model for Hebrew writing style recognition using individual characters."""
 
     load_dotenv()
 
     def __init__(self) -> None:
-        """
-        Initializes the recognizer model.
-        """
+        """Initialize the recognizer model."""
         self.model = None
 
     def set_model(
@@ -26,14 +22,10 @@ class StyleClassifierModel:
         drop_rate: float = 0.3,
         arch: str = "dense_net_121",
     ) -> None:
-        """
-        Creates the sequential CNN for character recognition.
-        """
+        """Create the sequential CNN for character recognition."""
 
         def cnn_dense_net_121() -> models.Model:
-            """
-            DenseNet121 pretrained architecture.
-            """
+            """Create the DenseNet121 pretrained architecture."""
             old_model = DenseNet121(
                 include_top=False,
                 weights="imagenet",
@@ -54,10 +46,7 @@ class StyleClassifierModel:
             return model
 
         def cnn_custom() -> models.Model:
-            """
-            Custom CNN Architecture.
-            """
-
+            """Create the custom CNN Architecture."""
             model = models.Sequential()
 
             # conv1
@@ -114,21 +103,15 @@ class StyleClassifierModel:
         )
 
     def get_summary(self) -> str:
-        """
-        Get summary of the recognizer model.
-        """
+        """Get summary of the recognizer model."""
         return self.model.summary()
 
     def predict(self, data) -> np.ndarray:
-        """
-        Predicts the character labels of given input images.
-        """
+        """Predict the character labels of given input images."""
         return self.model.predict(data)
 
     def save_model(self, model_name: str) -> None:
-        """
-        Saves the model to the style model path under the given name.
-        """
+        """Save the model to the style model path under the given name."""
         if "STYLE_MODEL_DATA" in os.environ:
             print("Cannot find STYLE_MODEL_DATA environment variable")
             exit(1)
@@ -136,9 +119,7 @@ class StyleClassifierModel:
         self.model.save(Path(os.environ["STYLE_MODEL_DATA"]) / model_name)
 
     def load_model(self, model_name: str) -> None:
-        """
-        Loads a saved model from the style model path under the given name.
-        """
+        """Load a saved model from the style model path under the given name."""
         if "STYLE_MODEL_DATA" in os.environ:
             print("Cannot find STYLE_MODEL_DATA environment variable")
             exit(1)

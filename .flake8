@@ -1,5 +1,6 @@
 [flake8]
+# Ignore E402 for path insertion, the rest is for black compatibility
+# https://ljvmiranda921.github.io/notebook/2018/06/21/precommits-using-black-and-flake8/
+ignore = E203, E266, E402, E501, W503
+max-complexity = 18
 max-line-length = 88
-extend-ignore = E203, E402
-# E402 ignored for path insertion
-# Rest for black compatibility

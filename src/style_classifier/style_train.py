@@ -10,7 +10,7 @@ from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.utils import class_weight
 from tap import Tap
 
-sys.path.append(str(Path(__file__).resolve().parents[2]))
+sys.path.append(str(Path(__file__).parents[2].resolve()))
 
 from src.data_handler.hebrew import HebrewStyles
 
@@ -19,9 +19,7 @@ CV_IMG_SIZE = (IMG_SIZE[1], IMG_SIZE[0])
 
 
 class ArgParser(Tap):
-    """
-    Argument parser for the style classifier trainer.
-    """
+    """Argument parser for the style classifier trainer."""
 
     input_path: Path = Path("data/style-data")  # input data folder
     save_test_indices: Path  # if given, where numpy array with test indices is saved
@@ -29,6 +27,7 @@ class ArgParser(Tap):
     save_df: Path  # if given, where dataframe with model output is saved
 
     def configure(self) -> None:
+        """Configure the argument parser."""
         self.add_argument("-i", "--input_path")
         self.add_argument("-t", "--save_test_indices", required=False)
         self.add_argument("-p", "--save_plot", required=False)
@@ -36,10 +35,7 @@ class ArgParser(Tap):
 
 
 def plot_history(history, plot_path: Path) -> None:
-    """
-    Plot and save the history of the classifier training.
-    """
-
+    """Plot and save the history of the classifier training."""
     plt.plot(history.history["accuracy"], label="accuracy")
     plt.plot(history.history["val_accuracy"], label="val_accuracy")
     plt.xlabel("Epoch")
@@ -50,6 +46,7 @@ def plot_history(history, plot_path: Path) -> None:
 
 
 def main() -> None:
+    """Train the style classifier."""
     ap = ArgParser()
     args = ap.parse_args()
 

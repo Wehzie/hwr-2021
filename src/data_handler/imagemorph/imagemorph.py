@@ -1,5 +1,5 @@
 import sys
-from ctypes import *
+from ctypes import cast, CDLL, c_double, c_int, POINTER, Structure
 from pathlib import Path
 
 import cv2 as cv
@@ -7,32 +7,32 @@ import numpy as np
 
 
 class Pixel(Structure):
-    """ This class mimics the Pixel structure defined in imagemorph.c. """
-    _fields_ = [('r', c_int),
-                ('g', c_int),
-                ('b', c_int)]
+    """This class mimics the Pixel structure defined in imagemorph.c."""
+
+    _fields_ = [("r", c_int), ("g", c_int), ("b", c_int)]
 
 
 def elastic_morphing(img, amp, sigma, h, w):
-    """ 
-    Apply random elastic morphing to an image. 
+    """Apply random elastic morphing to an image.
 
     Args:
-        img: BGR image in the form of a numpy array of shape (h, w, 3). 
+        img: BGR image in the form of a numpy array of shape (h, w, 3).
         amp: average amplitude of the displacement field (average pixel displacement)
-        sigma: standard deviation of the Gaussian smoothing kernel 
+        sigma: standard deviation of the Gaussian smoothing kernel
         h: height of the image
         w: width of the image
     """
     assert img.shape == (h, w, 3), f"img should have shape (h, w, 3), not {img.shape}"
-    
+
     # load C library
     try:
         cwd = Path(__file__).resolve().parent  # location of this module
-        libfile = list(cwd.rglob('libimagemorph*.so'))[0]
+        libfile = list(cwd.rglob("libimagemorph*.so"))[0]
     except IndexError:
-        print("Error: imagemorph library could not be found. Make sure to "
-              "first compile the C library using `python setup.py build`.")
+        print(
+            "Error: imagemorph library could not be found. Make sure to "
+            "first compile the C library using `python setup.py build`."
+        )
         sys.exit()
 
     c_lib = CDLL(libfile)
@@ -40,7 +40,13 @@ def elastic_morphing(img, amp, sigma, h, w):
     # load the elastic morphing function from the C library
     elastic_morphing = c_lib.elastic_morphing
     elastic_morphing.restype = POINTER(POINTER(Pixel))
-    elastic_morphing.argtypes = [POINTER(POINTER(Pixel)), c_int, c_int, c_double, c_double]
+    elastic_morphing.argtypes = [
+        POINTER(POINTER(Pixel)),
+        c_int,
+        c_int,
+        c_double,
+        c_double,
+    ]
 
     # convert parameters to C compatible data types
     img_c = (h * POINTER(Pixel))()
@@ -53,7 +59,7 @@ def elastic_morphing(img, amp, sigma, h, w):
     img_c = cast(img_c, POINTER(POINTER(Pixel)))
     amp_c, sigma_c = c_double(amp), c_double(sigma)
     h_c, w_c = c_int(h), c_int(w)
-    
+
     # apply the elastic morphing to the image
     img_c = elastic_morphing(img_c, h_c, w_c, amp_c, sigma_c)
 
@@ -66,7 +72,7 @@ def elastic_morphing(img, amp, sigma, h, w):
     return res
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     amp, sigma = 0.9, 9
     img_name = "img/sample-input.png"
 
@@ -78,5 +84,4 @@ if __name__ == '__main__':
     res = elastic_morphing(img, amp, sigma, h, w)
 
     # write result to disk
-    cv.imwrite('img/out.png', res)
-
+    cv.imwrite("img/out.png", res)

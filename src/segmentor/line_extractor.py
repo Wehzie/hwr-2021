@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import List
 
 import cv2 as cv
 import numpy as np
@@ -6,26 +7,24 @@ from scipy import ndimage
 from scipy.signal import find_peaks
 from tap import Tap
 
+from bounding_box import BoundingBox
+
 
 class ArgParser(Tap):
+    """Argument parser for the line extractor."""
+
     input_dir: Path  # Directory that contains dead sea scroll pictures
     output_dir: Path  # Directory where extracted pictures are saved
 
-    def configure(self):
+    def configure(self) -> None:
+        """Configure the argument parser."""
         self.add_argument("input_dir")
         self.add_argument("output_dir")
 
 
-class BoundingBox:
-    def __init__(self, x, y, w, h):
-        self.x = x
-        self.y = y
-        self.w = w
-        self.h = h
-
-
 def get_bounding_boxes(img: np.ndarray, max_height=250, min_area=10000):
-    """
+    """Get bounding boxes of text lines.
+
     Takes a thresholded image and returns an array of bounding boxes.
     Bounding boxes with height smaller than max_height are split,
     boxes with area smaller than min_area are discarded.
@@ -39,9 +38,7 @@ def get_bounding_boxes(img: np.ndarray, max_height=250, min_area=10000):
         cv.line(img, (0, y), (img.shape[1], y), 255, 30)
 
     # Estimate connected components
-    (num_labels, labels, stats, centroids) = cv.connectedComponentsWithStats(
-        img, 8, cv.CV_32S
-    )
+    num_labels, _, stats, _ = cv.connectedComponentsWithStats(img, 8, cv.CV_32S)
 
     boxes = []
     for i in range(1, num_labels):
@@ -60,7 +57,8 @@ def get_bounding_boxes(img: np.ndarray, max_height=250, min_area=10000):
 
 
 def split_bounding_box(box: BoundingBox):
-    """
+    """Split bounding box spanning two lines into separate lines.
+
     TODO: check if box is large AND bimodal, then split on valley.
     Splitting only on height leads to some large single lines being split.
 
@@ -73,18 +71,17 @@ def split_bounding_box(box: BoundingBox):
 
 
 def clean_boxes(img: np.ndarray, box: BoundingBox):
-    """
+    """Remove elements that do not belong to the text line from a bounding box.
+
     Takes an image, bounding box and offset width as input and returns an image
     of the bounding box without shapes intruding from other text lines
     """
     offset = 3
     img_pad = np.pad(img, ((offset, offset), (0, 0)))
-    sub_img = img_pad[box.y : (box.y + 2 * offset + box.h), (box.x) : (box.x + box.w)]
+    sub_img = img_pad[box.y : box.y + 2 * offset + box.h, box.x : box.x + box.w]
     cv.rectangle(sub_img, (0, 0), (sub_img.shape[1], sub_img.shape[0]), 255, 2)
 
-    (num_labels, labels, stats, centroids) = cv.connectedComponentsWithStats(
-        sub_img, 8, cv.CV_32S
-    )
+    _, labels, stats, _ = cv.connectedComponentsWithStats(sub_img, 8, cv.CV_32S)
     if len(stats) > 2:
         comp_id = np.argmax(stats[1:-1, cv.CC_STAT_AREA]) + 1
     else:
@@ -99,8 +96,8 @@ def clean_boxes(img: np.ndarray, box: BoundingBox):
 
 
 def overlay_hough_lines(img: np.ndarray, lines):
-    """
-    Add the extracted hough lines to the original image.
+    """Add the extracted hough lines to the original image.
+
     Only used for testing purposes.
     """
     hough = img.copy()
@@ -121,13 +118,11 @@ def overlay_hough_lines(img: np.ndarray, lines):
 
 
 def correct_rotation(img: np.ndarray, hough_threshold: int):
-    """
-    Rotate the image so the lines are (mostly) horizontal,
-    instead of (slightly) tilted.
+    """Rotate the image so the lines are horizontal, instead of tilted.
+
     TODO: Dynamically set threshold for better hough line detection in some
      images while reducing unneccesarily high number of lines in others.
     """
-
     edges = cv.Canny(img, 50, 200)
     lines = cv.HoughLines(
         edges,
@@ -166,12 +161,8 @@ def correct_rotation(img: np.ndarray, hough_threshold: int):
     return ndimage.rotate(img, rotation, cval=255)
 
 
-def extract_lines(img_path: Path):
-    """
-    Loads a given file from image-data and saves extracted lines
-    to the lines folder
-    """
-
+def extract_lines(img_path: Path) -> List[np.ndarray]:
+    """Load a file from image-data and save extracted lines to lines folder."""
     img = cv.imread(str(img_path.resolve()), cv.IMREAD_GRAYSCALE)
 
     if img is None:
@@ -186,16 +177,11 @@ def extract_lines(img_path: Path):
 
     boxes = get_bounding_boxes(img)
 
-    L_images = []
+    images = []
     for i, box in enumerate(boxes):
         clean = clean_boxes(img, box)
-        # clean = img[box.y : box.y + box.h, box.x : box.x + box.w]
-        L_images.append(cv.bitwise_not(clean))
-        #cv.imwrite(
-        #    str((out_dir / f"{img_path.stem}_L{i}.png").resolve()),
-        #    cv.bitwise_not(clean),
-        #)
-    return L_images
+        images.append(cv.bitwise_not(clean))
+    return images
 
 
 if __name__ == "__main__":
@@ -204,6 +190,11 @@ if __name__ == "__main__":
     ).parse_args()
 
     # TODO: let loop iterate over all binarized images
-    for img in args.input_dir.glob("*binarized.jpg"):
-        print(f"Processing {img.name}")
-        extract_lines(img, args.output_dir)
+    for image_path in args.input_dir.glob("*binarized.jpg"):
+        print(f"Processing {image_path.name}")
+        images = extract_lines(image_path)
+        for idx, image in enumerate(images):
+            cv.imwrite(
+                str((args.output_dir / f"{image_path.stem}_L{idx}.png").resolve()),
+                cv.bitwise_not(image),
+            )

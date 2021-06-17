@@ -1,24 +1,20 @@
-import inspect
 import os
 import re
 import shutil
 import sys
 from pathlib import Path
+from typing import List
 
 import requests
 from dotenv import load_dotenv
 
-current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-project_root_dir = os.path.dirname(os.path.dirname(current_dir))
-sys.path.insert(0, project_root_dir)
+sys.path.append(str(Path(__file__).parents[2].resolve()))
 
 from src.data_handler.font_images import FontImages
 
 
 class DatasetBuilder:
-    """
-    Download and organize all required data for the pipeline.
-    """
+    """Download and organize all required data for the pipeline."""
 
     load_dotenv()  # load environment variables from .env file
 
@@ -42,14 +38,14 @@ class DatasetBuilder:
     }
 
     def __init__(self) -> None:
+        """Initialize the dataset builder."""
         self.hebrew_alphabet = None  # list of hebrew characters
 
     def download_data(self, url: str, source_type: str) -> None:
-        """
-        Download data from a single URL using the requests module.
+        """Download data from a single URL using the requests module.
+
         Only works with Nextcloud instances via WebDAV.
         """
-
         r = None  # request
 
         # download data from nextcloud
@@ -82,12 +78,10 @@ class DatasetBuilder:
                 for chunk in r.iter_content(self.chunk_size):
                     f.write(chunk)
         except OSError:
-            print(f"Error: {os.listdir(Path(os.environ['DATA_PATH']))}")
+            print(f"Error: {list(Path(os.environ['DATA_PATH']).iterdir())}")
 
     def download_all_data(self) -> None:
-        """
-        Download the character-images, fragment images and font data.
-        """
+        """Download the character-images, fragment images and font data."""
         print("Download in progress.")
         self.download_data(os.environ["NC_TOKEN_TRAIN_CHARACTERS"], "nextcloud")
         self.download_data(os.environ["NC_TOKEN_TRAIN_FRAGMENTS"], "nextcloud")
@@ -97,11 +91,11 @@ class DatasetBuilder:
         print("Download complete!")
 
     def unpack_rename_data(self):
-        """
+        """Unpack and rename downloaded data.
+
         Unpack and rename image-data.zip, monkbrill.tar.gz,
         characters_for_style_classification.zip, full_images_periods.zip
-        and habbakuk.ZIP.
-        Then delete each original file.
+        and habbakuk.ZIP. Then delete each original file.
         """
         for old, new in self.f_name_map.items():
             try:
@@ -111,29 +105,26 @@ class DatasetBuilder:
                     shutil.unpack_archive(read_path, write_path, "zip")
                 else:
                     shutil.unpack_archive(read_path, write_path)
-                os.remove(read_path)  # delete original file
+                read_path.unlink()  # delete original file
             except OSError:
                 print(f"File doest not exist at {read_path}")
 
     def split_data_characters(self) -> None:
-        """
-        Split labelled character data into train, dev (validation) and test sets.
-        """
-        read_path: Path = Path(os.environ["DATA_PATH"]) / "characters" 
-        character_path: Path = Path(os.environ["DATA_PATH"]) / "characters" / "monkbrill2"
-        for directory in os.listdir(character_path):
-            shutil.move(str(Path(character_path / directory)), read_path)
-        os.rmdir(character_path)
-
-        letter_directories: list = os.listdir(read_path)
+        """Split labelled character data into train, dev (validation) and test sets."""
+        read_path: Path = Path(os.environ["DATA_PATH"]) / "characters"
+        character_path: Path = (
+            Path(os.environ["DATA_PATH"]) / "characters" / "monkbrill2"
+        )
+        for directory in character_path.iterdir():
+            shutil.move(character_path / directory, read_path)
+        character_path.rmdir()
 
         for subset in self.data_split:  # train, dev, test
-            os.mkdir(Path(read_path / subset))
-            for letter in letter_directories:
-                os.mkdir(Path(read_path / subset / letter))
+            for letter in read_path.iterdir():
+                (read_path / subset / letter).mkdir(parents=True, exist_ok=True)
 
-        for letter in letter_directories:
-            images: list = os.listdir(Path(read_path / letter))
+        for letter in read_path.iterdir():
+            images: List[Path] = list((read_path / letter).iterdir())
             split_train: int = int(len(images) * self.data_split["train"])
             split_dev: int = split_train + int(len(images) * self.data_split["dev"])
 
@@ -145,33 +136,29 @@ class DatasetBuilder:
             for subset in split_indices:
                 for image in subset[0]:
                     shutil.move(
-                        Path(read_path / letter / image),
-                        Path(read_path / subset[1] / letter / image),
+                        read_path / letter / image,
+                        read_path / subset[1] / letter / image,
                     )
 
-            os.rmdir(Path(read_path / letter))
+            (read_path / letter).rmdir()
 
     def assert_data_characters_correct(self) -> bool:
-        """
-        Assert that the labelled character data exists and is in the correct format.
-        """
+        """Assert that the labelled character data exists and has the correct format."""
         read_path = Path(os.environ["DATA_PATH"]) / "characters"
-        if not os.path.exists(read_path):
+        if not read_path.exists():
             return False
-        if set(os.listdir(read_path)) != {"train", "dev", "test"}:
+        if set(read_path.iterdir()) != {"train", "dev", "test"}:
             return False
-        for subset in os.listdir(read_path):
+        for subset in read_path.iterdir():
             if (
-                len(os.listdir(Path(read_path / subset)))
+                len(list((read_path / subset).iterdir()))
                 != self.directory_size_characters
             ):
                 return False
         return True
 
     def assert_data_correct(self) -> bool:
-        """
-        Assert that all data exists and is in the correct format.
-        """
+        """Assert that all data exists and is in the correct format."""
         corr_char = self.assert_data_characters_correct()
         print("Character data correct?", corr_char)
         corr_font = FontImages().assert_data_correct()
@@ -179,26 +166,24 @@ class DatasetBuilder:
         corr_frag = self.assert_data_fragments_correct()
         print("Frag data correc?", corr_frag)
         return True if corr_char and corr_font and corr_frag else False
-    
+
     def split_data_fragments(self) -> None:
-        """
-        Split DSS fragments into train, dev (validation) and test sets.
-        """
+        """Split DSS fragments into train, dev (validation) and test sets."""
         read_path: Path = Path(os.environ["DATA_PATH"]) / "fragments"
         try:
             shutil.rmtree(read_path / "__MACOSX")
         except FileNotFoundError:
-            print("Folder \"__MACOSX\" already removed.")
-        
+            print('Folder "__MACOSX" already removed.')
+
         for subset in self.data_split:  # make train, dev, test
-            os.mkdir(Path(read_path / subset))
-        
+            (read_path / subset).mkdir()
+
         # delete non-binarized images
-        frags: list = os.listdir(read_path / "image-data")
+        frags: list = list((read_path / "image-data").iterdir())
         frags_binarized: list = [frag for frag in frags if "binarized" in frag]
         frags_delete: set = set(frags).difference(set(frags_binarized))
         for frag in frags_delete:
-            os.remove(read_path / "image-data" / frag)
+            (read_path / "image-data" / frag).unlink()
         frags = frags_binarized
 
         split_train: int = int(len(frags) * self.data_split["train"])
@@ -212,35 +197,35 @@ class DatasetBuilder:
         for subset in split_indices:
             for fragment in subset[0]:
                 shutil.move(
-                    Path(read_path / "image-data" / fragment),
-                    Path(read_path / subset[1] / fragment),
+                    read_path / "image-data" / fragment,
+                    read_path / subset[1] / fragment,
                 )
 
-        os.rmdir(Path(read_path / "image-data"))    # delete empty folder
-        
+        (read_path / "image-data").rmdir()  # delete empty folder
+
     def assert_data_fragments_correct(self) -> bool:
-        """
-        Assert that the fragment data exists and is in the correct format.
-        """
+        """Assert that the fragment data exists and is in the correct format."""
         read_path = Path(os.environ["DATA_PATH"]) / "fragments"
-        if not os.path.exists(read_path):
+        if not read_path.exits():
             return False
-        if set(os.listdir(read_path)) != {"train", "dev", "test"}:
+        if set(read_path.iterdir()) != {"train", "dev", "test"}:
             return False
-        for subset in os.listdir(read_path):
+        for subset in read_path.iterdir():
             # a file with "binarized" in the name should be in each subset
-            if "binarized" not in os.listdir(Path(read_path / subset))[0]:
+            if "binarized" not in (read_path / subset).iterdir()[0]:
                 return False
         return True
 
     def create_font_data(self):
-        """
+        """Create font data.
+
         Expects data/font_characters/Habbakuk.TTF
         """
         font_data = FontImages()
         if not font_data.assert_data_correct():
             font_data.create_images()
             font_data.augment_data()
+
 
 if __name__ == "__main__":
     data_build = DatasetBuilder()

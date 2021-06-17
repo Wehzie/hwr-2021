@@ -1,4 +1,3 @@
-import inspect
 import os
 import sys
 from glob import glob
@@ -10,9 +9,7 @@ import pandas as pd
 from dotenv import load_dotenv
 from tensorflow import keras
 
-current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-project_root_dir = os.path.dirname(os.path.dirname(current_dir))
-sys.path.insert(0, project_root_dir)
+sys.path.append(str(Path(__file__).parents[2].resolve()))
 
 from src.data_handler.dataset_builder import DatasetBuilder
 from src.data_handler.hebrew import HebrewAlphabet
@@ -110,18 +107,18 @@ class TrainTest:
         Train on training set (X_train, y_train) and
         validate on dev set (X_dev, y_dev).
         """
-        self.recognizer.set_model((self.img_size[1],self.img_size[0]), 0.3)
+        self.recognizer.set_model((self.img_size[1], self.img_size[0]), 0.3)
         self.recognizer.model.compile(
             optimizer=keras.optimizers.Adam(),
             loss=keras.losses.SparseCategoricalCrossentropy(),
             metrics=["accuracy"],
         )
 
-        font_chars = os.listdir(self.read_path/"train"/"Alef")
+        font_chars = os.listdir(self.read_path / "train" / "Alef")
         if len(font_chars) == 27:
-        # print(self.recognizer.get_summary())
+            # print(self.recognizer.get_summary())
             print("Pretraining on font data.")
-            self.recognizer.model.fit(self.X_pretrain, self.y_pretrain) #pretraining
+            self.recognizer.model.fit(self.X_pretrain, self.y_pretrain)  # pretraining
 
         es = keras.callbacks.EarlyStopping(
             monitor="val_accuracy",
