@@ -64,6 +64,17 @@ def get_bounding_boxes(img: np.ndarray, min_pixel=120) -> List[BoundingBox]:
             box = BoundingBox(None, 0, None, height)  # reset box
     return boxes
 
+def split_non_connected(chars: List[np.ndarray]) -> List[np.ndarray]:
+    return chars
+
+def split_connected(chars: List[np.ndarray]) -> List[np.ndarray]:
+    print(len(chars))
+    # if len(chars):
+    #     char = chars[0]
+    #     height = np.where(char == 255)
+    #     print(f" max {height[0].max()} min {height[0].min()} total height: {char.shape[0]}")
+    #     return chars
+
 
 def extract_characters(img: np.ndarray, read_ord="r2l") -> List[np.ndarray]:
     """Load a word image and return extracted characters."""
@@ -84,6 +95,10 @@ def extract_characters(img: np.ndarray, read_ord="r2l") -> List[np.ndarray]:
         inversed = cv.bitwise_not(clean)
         if box.w > 16:
             characters.append(inversed)
+
+        characters = split_non_connected(characters)
+        characters = split_connected(characters)
+
         # cv.imwrite(
         #    str((out_dir / f"{path_stem}c{i}.png").resolve()),
         #    cv.bitwise_not(clean),
@@ -97,23 +112,21 @@ if __name__ == "__main__":
     ).parse_args()
 
     # Extract lines
-    for img in args.input_dir.glob("*binarized.jpg"):  # For each fragment
-        print(f"Processing {img.name}")
+    for img_path in args.input_dir.glob("*binarized.jpg"):  # For each fragment
+        print(f"Processing {img_path.name}")
 
-        img_path = str((args.input_dir / f"{img.name}").resolve())
-        fragment_path = str((args.output_dir / f"{img.name}").resolve())[:-4]
-        character_path = fragment_path + "/" + "characters"
-        os.mkdir(fragment_path)
-        os.mkdir(character_path)
+        fragment_path = args.output_dir / img_path.stem
+        character_path = fragment_path / "characters"
+        character_path.mkdir(parents=True, exist_ok=True)
 
-        image = cv.imread(img_path)
+        image = cv.imread(str(img_path.resolve()))
 
-        cv.imwrite(fragment_path + "/" + f"{img.name}", image)
-        lines = extract_lines(img)
+        cv.imwrite(str((fragment_path / img_path.name).resolve()), image)
+        lines = extract_lines(img_path)
 
         for i in range(len(lines)):  # Extract words
             line = lines[i]
-            cv.imwrite(f"{fragment_path}/line{i}.png", line)
+            cv.imwrite(str((fragment_path / f"line{i}.png").resolve()), line)
             words = extract_words(line)
 
             for j in range(len(words)):  # Extract characters
@@ -122,4 +135,4 @@ if __name__ == "__main__":
                 for z in range(len(chars)):
                     char = chars[z]
                     # print(np.sum(char), i,j,z, char.shape)
-                    cv.imwrite(f"{character_path}/characterL{i}_W{j}_C{z}.png", char)
+                    cv.imwrite(str((character_path / f"characterL{i}_W{j}_C{z}.png").resolve()), char)
