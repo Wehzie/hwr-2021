@@ -58,7 +58,7 @@ class FontImages:
         # expected number is repetitions + original, or just original if no morphing
         # took place
         for directory in self.training_folder.iterdir():
-            img_count = len(list((self.training_folder / directory).iterdir()))
+            img_count = len(list(directory.iterdir()))
             if img_count != self.repetitions + 1 and img_count != 1:
                 return False
         return True
