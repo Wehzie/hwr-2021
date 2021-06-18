@@ -3,7 +3,7 @@ import re
 import shutil
 import sys
 from pathlib import Path
-from typing import List
+from typing import Dict, List
 
 import requests
 from dotenv import load_dotenv
@@ -116,31 +116,33 @@ class DatasetBuilder:
             Path(os.environ["DATA_PATH"]) / "characters" / "monkbrill2"
         )
         for directory in character_path.iterdir():
-            shutil.move(character_path / directory, read_path)
+            shutil.move(directory, read_path)
         character_path.rmdir()
 
-        for subset in self.data_split:  # train, dev, test
-            for letter in read_path.iterdir():
-                (read_path / subset / letter).mkdir(parents=True, exist_ok=True)
+        for letter_dir in read_path.iterdir():
+            for subset in self.data_split:
+                # Ensure the subset and letter directories exist
+                (read_path / subset / letter_dir.name).mkdir(
+                    parents=True, exist_ok=True
+                )
+            img_paths: List[Path] = list(letter_dir.iterdir())
+            split_train: int = int(len(img_paths) * self.data_split["train"])
+            split_dev: int = split_train + int(len(img_paths) * self.data_split["dev"])
 
-        for letter in read_path.iterdir():
-            images: List[Path] = list((read_path / letter).iterdir())
-            split_train: int = int(len(images) * self.data_split["train"])
-            split_dev: int = split_train + int(len(images) * self.data_split["dev"])
+            split_indices: Dict[str, List[Path]] = {
+                "train": img_paths[:split_train],
+                "dev": img_paths[split_train:split_dev],
+                "test": img_paths[split_dev:],
+            }
 
-            train_images: tuple = (images[:split_train], "train")
-            dev_images: tuple = (images[split_train:split_dev], "dev")
-            test_images: tuple = (images[split_dev:], "test")
-            split_indices: list = [train_images, dev_images, test_images]
-
-            for subset in split_indices:
-                for image in subset[0]:
+            for subset, img_paths in split_indices.items():
+                for img_path in img_paths:
                     shutil.move(
-                        read_path / letter / image,
-                        read_path / subset[1] / letter / image,
+                        img_path,
+                        read_path / subset / letter_dir.name / img_path.name,
                     )
 
-            (read_path / letter).rmdir()
+            letter_dir.rmdir()
 
     def assert_data_characters_correct(self) -> bool:
         """Assert that the labelled character data exists and has the correct format."""
@@ -150,10 +152,7 @@ class DatasetBuilder:
         if set(read_path.iterdir()) != {"train", "dev", "test"}:
             return False
         for subset in read_path.iterdir():
-            if (
-                len(list((read_path / subset).iterdir()))
-                != self.directory_size_characters
-            ):
+            if len(list(subset.iterdir())) != self.directory_size_characters:
                 return False
         return True
 
@@ -179,40 +178,37 @@ class DatasetBuilder:
             (read_path / subset).mkdir()
 
         # delete non-binarized images
-        frags: list = list((read_path / "image-data").iterdir())
-        frags_binarized: list = [frag for frag in frags if "binarized" in frag]
-        frags_delete: set = set(frags).difference(set(frags_binarized))
+        frag_paths: list = list((read_path / "image-data").iterdir())
+        frags_binarized: list = [fp for fp in frag_paths if "binarized" in fp.name]
+        frags_delete: set = set(frag_paths).difference(set(frags_binarized))
         for frag in frags_delete:
-            (read_path / "image-data" / frag).unlink()
-        frags = frags_binarized
+            frag.unlink()
+        frag_paths = frags_binarized
 
-        split_train: int = int(len(frags) * self.data_split["train"])
-        split_dev: int = split_train + int(len(frags) * self.data_split["dev"])
+        split_train: int = int(len(frag_paths) * self.data_split["train"])
+        split_dev: int = split_train + int(len(frag_paths) * self.data_split["dev"])
 
-        train_frags: tuple = (frags[:split_train], "train")
-        dev_frags: tuple = (frags[split_train:split_dev], "dev")
-        test_frags: tuple = (frags[split_dev:], "test")
-
-        split_indices: list = [train_frags, dev_frags, test_frags]
-        for subset in split_indices:
-            for fragment in subset[0]:
-                shutil.move(
-                    read_path / "image-data" / fragment,
-                    read_path / subset[1] / fragment,
-                )
+        split_indices: list = [
+            frag_paths[:split_train],
+            frag_paths[split_train:split_dev],
+            frag_paths[split_dev:],
+        ]
+        for idx, frag_paths in enumerate(split_indices):
+            for frag in frag_paths:
+                shutil.move(frag, read_path / self.data_split[idx] / frag)
 
         (read_path / "image-data").rmdir()  # delete empty folder
 
     def assert_data_fragments_correct(self) -> bool:
         """Assert that the fragment data exists and is in the correct format."""
         read_path = Path(os.environ["DATA_PATH"]) / "fragments"
-        if not read_path.exits():
+        if not read_path.exists():
             return False
         if set(read_path.iterdir()) != {"train", "dev", "test"}:
             return False
         for subset in read_path.iterdir():
             # a file with "binarized" in the name should be in each subset
-            if "binarized" not in (read_path / subset).iterdir()[0]:
+            if "binarized" not in list(subset.iterdir())[0].name:
                 return False
         return True
 

@@ -114,7 +114,7 @@ class TrainTest:
             metrics=["accuracy"],
         )
 
-        font_chars = os.listdir(self.read_path / "train" / "Alef")
+        font_chars = list((self.read_path / "train" / "Alef").iterdir())
         if len(font_chars) == 27:
             # print(self.recognizer.get_summary())
             print("Pretraining on font data.")
