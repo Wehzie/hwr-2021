@@ -1,4 +1,5 @@
 from pathlib import Path
+import sys
 from typing import List
 
 import cv2 as cv
@@ -6,7 +7,9 @@ import numpy as np
 from scipy.signal import lfilter
 from tap import Tap
 
-from bounding_box import BoundingBox
+sys.path.append(str(Path(__file__).parents[2].resolve()))
+
+from src.segmentor.bounding_box import BoundingBox
 
 
 class ArgParser(Tap):

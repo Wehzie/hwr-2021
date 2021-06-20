@@ -1,15 +1,18 @@
+from dataclasses import dataclass
+import sys
 from pathlib import Path
 
 import cv2 as cv
 import numpy as np
-import os
 from skimage.morphology import skeletonize
 from tap import Tap
 from typing import List
 
-from bounding_box import BoundingBox
-from word_from_line import extract_words
-from line_extractor import extract_lines
+sys.path.append(str(Path(__file__).parents[2].resolve()))
+
+from src.segmentor.bounding_box import BoundingBox
+from src.segmentor.word_from_line import extract_words
+from src.segmentor.line_extractor import extract_lines
 
 
 class ArgParser(Tap):
@@ -23,6 +26,13 @@ class ArgParser(Tap):
         self.add_argument("input_dir")
         self.add_argument("output_dir")
 
+@dataclass
+class WriteParams:
+    """Control what types of data are saved to file."""
+    frag: bool = True
+    line: bool = True
+    word: bool = False
+    char: bool = True
 
 def get_bounding_boxes(img: np.ndarray, min_pixel=120) -> List[BoundingBox]:
     """Get bounding boxes of characters in a word image.
@@ -88,7 +98,7 @@ def split_connected(chars: List[np.ndarray]) -> List[np.ndarray]:
     return split_chars
 
 
-def extract_characters(img: np.ndarray, read_ord="r2l") -> List[np.ndarray]:
+def extract_characters_from_word(img: np.ndarray, read_ord="r2l") -> List[np.ndarray]:
     """Load a word image and return extracted characters."""
 
     # Threshold and invert
@@ -118,33 +128,61 @@ def extract_characters(img: np.ndarray, read_ord="r2l") -> List[np.ndarray]:
     return characters
 
 
+def extract_chars_from_fragment(in_frag_path, output_dir, w_par):
+    """
+    in_frag_path: the path of the fragment from which characters are extracted
+    output_dir: path of the directory to which characters are extracted
+    w_par: parameters for writing to file controlled by a data class
+    return: None. Writes to file
+    """
+    # Extract lines
+    print(f"Processing {in_frag_path.name}")
+
+    # define output paths and make directories
+    out_frag_path: Path = output_dir / in_frag_path.stem
+    line_path = out_frag_path / "lines"
+    line_path.mkdir(parents=True, exist_ok=True)
+    word_path = out_frag_path / "words"
+    word_path.mkdir(parents=True, exist_ok=True)
+    character_path = out_frag_path / "characters"
+    character_path.mkdir(parents=True, exist_ok=True)
+
+    # copy fragment image from input to output directory
+    if w_par.frag == True:
+        frag_img = cv.imread(str(in_frag_path.resolve()))
+        cv.imwrite(str((out_frag_path / in_frag_path.name).resolve()), frag_img)
+    # extract lines from a fragment
+    lines = extract_lines(in_frag_path)
+
+    for i, line in enumerate(lines):  # Extract words from lines
+        # write line images to output directory
+        if w_par.line == True:
+            cv.imwrite(str((line_path / f"line_L{i}.png").resolve()), line)
+        # extract words from a line
+        words = extract_words(line)
+
+        for j, word in enumerate(words):  # Extract characters from words
+            # write word images to output directory
+            if w_par.word == True:
+                cv.imwrite(str((word_path / f"word_L{i}_W{j}.png").resolve()), line)
+            # extract characters from a word
+            chars = extract_characters_from_word(word)
+
+            for z, char in enumerate(chars):
+                # write character images to output directory
+                if w_par.char == True:
+                    char_path = character_path / f"character_L{i}_W{j}_C{z}.png"
+                    cv.imwrite(str(char_path.resolve()), char)
+
 if __name__ == "__main__":
     args = ArgParser(
-        description="Extract characters from binarized dead sea scroll pictures"
+        description="Extract characters from binarized dead sea scroll pictures."
     ).parse_args()
+    
+    write_params = WriteParams()
 
-    # Extract lines
-    for img_path in args.input_dir.glob("*binarized.jpg"):  # For each fragment
-        print(f"Processing {img_path.name}")
+    # extract characters for each fragment
+    for in_frag_path in args.input_dir.glob("*binarized.jpg"): 
+        extract_chars_from_fragment(in_frag_path, args.output_dir, write_params)
 
-        fragment_path = args.output_dir / img_path.stem
-        character_path = fragment_path / "characters"
-        character_path.mkdir(parents=True, exist_ok=True)
-
-        image = cv.imread(str(img_path.resolve()))
-
-        cv.imwrite(str((fragment_path / img_path.name).resolve()), image)
-        lines = extract_lines(img_path)
-
-        for i in range(len(lines)):  # Extract words
-            line = lines[i]
-            cv.imwrite(str((fragment_path / f"line{i}.png").resolve()), line)
-            words = extract_words(line)
-
-            for j in range(len(words)):  # Extract characters
-                word = words[j]
-                chars = extract_characters(word)
-                for z in range(len(chars)):
-                    char = chars[z]
-                    # print(np.sum(char), i,j,z, char.shape)
-                    cv.imwrite(str((character_path / f"characterL{i}_W{j}_C{z}.png").resolve()), char)
+    

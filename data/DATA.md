@@ -53,22 +53,6 @@ The data loader produces the following data structuring.
             test/
                 ...
         
-        segmented_lines/
-            train/
-                fragment_1/         
-                    line_1.pgm      
-                    ...
-                    line_n.pgm      # a .pgm for each line in a fragment
-                ...
-                document_n/         # a directory for each fragment
-            dev/
-                ...
-            test/                   # train, dev, test split following the fragments
-                ...
-
-        segmented_characters/
-            ...
-
         character_styles/
             ...
 
@@ -80,3 +64,20 @@ The data loader produces the following data structuring.
                 ...
             dense_net_121/
                 ...
+
+Applying character segmentation to a single fragment image results in the following output.
+
+    fragment_name/
+        fragment_name.jpg
+        lines/
+            line_L0.png
+            ...
+            line_Ln.png
+        words/
+            word_L0_W0.png
+            ...
+            word_Ln_Ln.png
+        characters/
+            character_L0_W0_C0.png
+            ...
+            character_Ln_Wn_Cn.png

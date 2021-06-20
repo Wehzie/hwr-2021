@@ -1,15 +1,15 @@
 from pathlib import Path
+import sys
 
 import cv2 as cv
 import numpy as np
-import os
-from skimage.morphology import skeletonize
 from tap import Tap
 from typing import List
 
-from bounding_box import BoundingBox
-from word_from_line import extract_words
-from line_extractor import extract_lines
+sys.path.append(str(Path(__file__).parents[2].resolve()))
+
+from src.segmentor.word_from_line import extract_words
+from src.segmentor.line_extractor import extract_lines
 
 
 class ArgParser(Tap):
