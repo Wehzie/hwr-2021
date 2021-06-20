@@ -2,7 +2,8 @@
 
 The pipeline automatically downloads all training data.
 Ensure that the `.env` file is present in the project's root directory to make downloading from password protected sources possible.
-We use a train-dev-test split of 80%-10%-10% for all data.
+We use a train-dev-test split of 80%-10%-10% for all labelled data.
+We plan to use a dev-test split of 50%-50% for unlabelled fragment data.
 
 To load all data run the following command.
 
@@ -45,9 +46,16 @@ The data loader produces the following data structuring.
 
             Habbakuk.TTF
 
+        # currently train directories are created
+        # but that is not sensible
+        # since we don't train on the fragment data
         fragments/
-            train/
+            dev/
                 ...
+            test/
+                ...
+        
+        segmented_fragments/
             dev/
                 ...
             test/
@@ -66,6 +74,7 @@ The data loader produces the following data structuring.
                 ...
 
 Applying character segmentation to a single fragment image results in the following output.
+Character segmentation populates the `segmented_fragments` directory.
 
     fragment_name/
         fragment_name.jpg

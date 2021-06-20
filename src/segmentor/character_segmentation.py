@@ -31,7 +31,7 @@ class WriteParams:
     """Control what types of data are saved to file."""
     frag: bool = True
     line: bool = True
-    word: bool = False
+    word: bool = True
     char: bool = True
 
 def get_bounding_boxes(img: np.ndarray, min_pixel=120) -> List[BoundingBox]:
@@ -164,7 +164,7 @@ def extract_chars_from_fragment(in_frag_path, output_dir, w_par):
         for j, word in enumerate(words):  # Extract characters from words
             # write word images to output directory
             if w_par.word == True:
-                cv.imwrite(str((word_path / f"word_L{i}_W{j}.png").resolve()), line)
+                cv.imwrite(str((word_path / f"word_L{i}_W{j}.png").resolve()), word)
             # extract characters from a word
             chars = extract_characters_from_word(word)
 
