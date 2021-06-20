@@ -115,3 +115,23 @@ we plan to use character recognition with a sliding window approach for characte
 		- Formally docstring >10LOC functions
 		- Comments
 
+## 2021, June 16, Wednesday
+
+- Mark: maybe we need to abandon dismissing non-character
+- Rafael: connectivity analysis works well
+	- others: what happens when a good single character is fed as input?
+	- others: make surrounding white to remove unwanted char fragments from main char
+	- Mark: minimum width of single character to avoid breaking apart damaged characters
+- Andele: got started on style and cleanup. using pydocstyle.
+- Lars: did transcription
+
+TODO:
+- finish segmentation
+	- (Rafael) connectivity analysis
+	- (Andele, Lars) split connected chars
+- image augmentation on train data
+	- (Mark) erosion and dilation and elastic morphing on train data
+	- goal: balance dataset
+- style classifier
+	- (Lars) write to text
+- style and analysis tools (plots)
