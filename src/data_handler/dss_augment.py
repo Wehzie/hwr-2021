@@ -23,18 +23,18 @@ class Augmenter:
     def erosion_image(self, img_path, min_kernel_size, max_kernel_size) -> None:
         """Erode the image at the given path."""
         original = cv.imread(img_path)
-        for i in range(min_kernel_size, max_kernel_size):
+        for i in range(min_kernel_size, max_kernel_size+1):
             kernel = np.ones((i, i), np.uint8)
             eroded_img = cv.erode(original, kernel, iterations=1)
-            cv.imwrite(f"{img_path}{i}.jpg", eroded_img)
+            cv.imwrite(f"{img_path}e{i}.jpg", eroded_img)
 
     def dilate_image(self, img_path, min_kernel_size, max_kernel_size) -> None:
         """Dilate the image at the given path."""
         original = cv.imread(img_path)
-        for i in range(min_kernel_size, max_kernel_size + 1):
+        for i in range(min_kernel_size, max_kernel_size+1):
             kernel = np.ones((i, i), np.uint8)
             dilated_img = cv.dilate(original, kernel, iterations=1)
-            cv.imwrite(f"{img_path}{i}.jpg", dilated_img)
+            cv.imwrite(f"{img_path}d{i}.jpg", dilated_img)
 
 
 if __name__ == "__main__":

@@ -11,6 +11,8 @@ from dotenv import load_dotenv
 sys.path.append(str(Path(__file__).parents[2].resolve()))
 
 from src.data_handler.font_images import FontImages
+from src.data_handler.imagemorph.imagemorph import elastic_morphing
+from src.data_handler.dss_augment import Augmenter
 
 
 class DatasetBuilder:
@@ -40,6 +42,7 @@ class DatasetBuilder:
     def __init__(self) -> None:
         """Initialize the dataset builder."""
         self.hebrew_alphabet = None  # list of hebrew characters
+        self.augmenter = Augmenter()
 
     def download_data(self, url: str, source_type: str) -> None:
         """Download data from a single URL using the requests module.
@@ -149,7 +152,7 @@ class DatasetBuilder:
         read_path = Path(os.environ["DATA_PATH"]) / "characters"
         if not read_path.exists():
             return False
-        if set(read_path.iterdir()) != {"train", "dev", "test"}:
+        if set([x.name for x in read_path.iterdir()]) != {"train", "dev", "test"}:
             return False
         for subset in read_path.iterdir():
             if len(list(subset.iterdir())) != self.directory_size_characters:
@@ -204,7 +207,7 @@ class DatasetBuilder:
         read_path = Path(os.environ["DATA_PATH"]) / "fragments"
         if not read_path.exists():
             return False
-        if set(read_path.iterdir()) != {"train", "dev", "test"}:
+        if set([x.name for x in read_path.iterdir()]) != {"train", "dev", "test"}:
             return False
         for subset in read_path.iterdir():
             # a file with "binarized" in the name should be in each subset
@@ -221,6 +224,21 @@ class DatasetBuilder:
         if not font_data.assert_data_correct():
             font_data.create_images()
             font_data.augment_data()
+    
+    def augment_train_data(self):
+        """Augment and balance the train data"""
+        read_path: Path = Path(os.environ["DATA_PATH"]) / "characters" / "train"
+        for letter_dir in read_path.iterdir():
+            original_images = list(letter_dir.iterdir())
+            length = len(original_images)
+            max_kernel = (240-length)/2/length + 2
+            if max_kernel >= 2.6:
+                max_kernel = min(round(max_kernel), 7)
+                for j in original_images:
+                    img_path = str(j)
+                    self.augmenter.dilate_image(img_path,3,max_kernel)
+                    self.augmenter.erosion_image(img_path,3,max_kernel)
+            print(len(list(letter_dir.iterdir())))
 
 
 if __name__ == "__main__":
@@ -231,3 +249,7 @@ if __name__ == "__main__":
         data_build.split_data_characters()
         data_build.split_data_fragments()
         data_build.create_font_data()
+    
+    dalet = Path(os.environ["DATA_PATH"]) / "characters" / "train" / "Dalet"
+    if len(list(dalet.iterdir())) == 72:
+        data_build.augment_train_data()
