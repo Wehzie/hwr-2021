@@ -4,6 +4,7 @@ import os
 import sys
 
 from dotenv import load_dotenv
+from glob import glob
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).parents[2].resolve()))
@@ -38,10 +39,12 @@ class Augmenter:
 
     def elastic_morphs(self, dir_path, reps):
         """Repeatedly apply morphing to character images of a font."""
-        for img_path in dir_path.iterdir():
+        img_paths = glob(f"{dir_path}/*.jpg")
+        print(img_paths)
+        exit()
+        for img_path in img_paths:
             img = cv.imread(str(img_path))
             h, w, _ = img.shape  # image height and width
-
             for rep in range(reps):
                 res = elastic_morphing(img, self.amp, self.sigma, h, w)  # morph image
                 cv.imwrite(f"{img_path}{rep}.jpeg", res)  # write result to disk

@@ -245,7 +245,7 @@ class DatasetBuilder:
                     reps = 4 - new_len // 50
                     self.augmenter.elastic_morphs(letter_dir, reps)
             except:
-                break
+                continue
 
 
 if __name__ == "__main__":
