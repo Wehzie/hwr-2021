@@ -112,7 +112,7 @@ class StyleClassifierModel:
 
     def save_model(self, model_name: str) -> None:
         """Save the model to the style model path under the given name."""
-        if "STYLE_MODEL_DATA" in os.environ:
+        if "STYLE_MODEL_DATA" not in os.environ:
             print("Cannot find STYLE_MODEL_DATA environment variable")
             exit(1)
 
@@ -120,7 +120,7 @@ class StyleClassifierModel:
 
     def load_model(self, model_name: str) -> None:
         """Load a saved model from the style model path under the given name."""
-        if "STYLE_MODEL_DATA" in os.environ:
+        if "STYLE_MODEL_DATA" not in os.environ:
             print("Cannot find STYLE_MODEL_DATA environment variable")
             exit(1)
 
