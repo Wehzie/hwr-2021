@@ -240,9 +240,12 @@ class DatasetBuilder:
                     self.augmenter.erosion_image(img_path,3,max_kernel)
             new_len = len(list(letter_dir.iterdir()))
             print(new_len)
-            if new_len < 160:
-                reps = 4 - new_len // 50
-                self.augmenter.elastic_morphs(letter_dir, reps)
+            try: # to make the program runnable if you are not on linux
+                if new_len < 160:
+                    reps = 4 - new_len // 50
+                    self.augmenter.elastic_morphs(letter_dir, reps)
+            except:
+                break
 
 
 if __name__ == "__main__":
