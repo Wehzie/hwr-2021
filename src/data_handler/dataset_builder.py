@@ -3,6 +3,7 @@ import re
 import shutil
 import sys
 from pathlib import Path
+from types import new_class
 from typing import Dict, List
 
 import requests
@@ -11,7 +12,6 @@ from dotenv import load_dotenv
 sys.path.append(str(Path(__file__).parents[2].resolve()))
 
 from src.data_handler.font_images import FontImages
-from src.data_handler.imagemorph.imagemorph import elastic_morphing
 from src.data_handler.dss_augment import Augmenter
 
 
@@ -233,12 +233,16 @@ class DatasetBuilder:
             length = len(original_images)
             max_kernel = (240-length)/2/length + 2
             if max_kernel >= 2.6:
-                max_kernel = min(round(max_kernel), 7)
+                max_kernel = min(round(max_kernel), 5)
                 for j in original_images:
                     img_path = str(j)
                     self.augmenter.dilate_image(img_path,3,max_kernel)
                     self.augmenter.erosion_image(img_path,3,max_kernel)
-            print(len(list(letter_dir.iterdir())))
+            new_len = len(list(letter_dir.iterdir()))
+            print(new_len)
+            if new_len < 160:
+                reps = 4 - new_len // 50
+                self.augmenter.elastic_morphs(letter_dir, reps)
 
 
 if __name__ == "__main__":

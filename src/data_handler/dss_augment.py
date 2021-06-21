@@ -9,7 +9,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parents[2].resolve()))
 
 from src.data_handler.hebrew import HebrewAlphabet
-
+from src.data_handler.imagemorph.imagemorph import elastic_morphing
 
 class Augmenter:
     """Dead Sea Scrolls data augmenter."""
@@ -35,6 +35,16 @@ class Augmenter:
             kernel = np.ones((i, i), np.uint8)
             dilated_img = cv.dilate(original, kernel, iterations=1)
             cv.imwrite(f"{img_path}d{i}.jpg", dilated_img)
+
+    def elastic_morphs(self, dir_path, reps):
+        """Repeatedly apply morphing to character images of a font."""
+        for img_path in dir_path.iterdir():
+            img = cv.imread(str(img_path))
+            h, w, _ = img.shape  # image height and width
+
+            for rep in range(reps):
+                res = elastic_morphing(img, self.amp, self.sigma, h, w)  # morph image
+                cv.imwrite(f"{img_path}{rep}.jpeg", res)  # write result to disk
 
 
 if __name__ == "__main__":

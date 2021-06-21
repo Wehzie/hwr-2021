@@ -4,8 +4,11 @@ from glob import glob
 from pathlib import Path
 
 import cv2
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
+
 from dotenv import load_dotenv
 from tensorflow import keras
 
@@ -53,6 +56,9 @@ class TrainTest:
             self.dataset_builder.split_data_characters()
             self.dataset_builder.split_data_fragments()
             self.dataset_builder.create_font_data()
+        dalet = (self.read_path / "train" / "Dalet")
+        if len(list(dalet.iterdir())) == 72:
+            self.dataset_builder.augment_train_data()
         X_pretrain, y_pretrain, X_train, y_train, X_dev, y_dev, X_test, y_test = tuple(
             [] for l in range(8)
         )
@@ -122,7 +128,7 @@ class TrainTest:
 
         es = keras.callbacks.EarlyStopping(
             monitor="val_accuracy",
-            patience=2,
+            patience=3,
             restore_best_weights=True,
             min_delta=0.007,
         )
@@ -131,7 +137,7 @@ class TrainTest:
             self.X_train,
             self.y_train,
             validation_data=(self.X_dev, self.y_dev),
-            epochs=8,
+            epochs=10,
             callbacks=[es],
         )
 
@@ -139,15 +145,16 @@ class TrainTest:
         # Confusion matrix on dev data with final model
         y_pred = self.recognizer.predict(self.X_dev)
         y_predict = np.argmax(y_pred, axis=1)
-        print(
-            pd.crosstab(
+        df = pd.crosstab(
                 pd.Series(self.y_dev),
                 pd.Series(y_predict),
                 rownames=["True:"],
                 colnames=["Predicted:"],
                 margins=True,
             )
-        )
+        print(df)
+        sns.heatmap(df.iloc[:-1,:-1], annot=True, fmt="g", cmap='viridis')
+        plt.show()
 
     def test_model(self) -> None:
         """
