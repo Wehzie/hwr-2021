@@ -179,7 +179,7 @@ class DatasetBuilder:
         print("Fragment data correct?", corr_frag)
         corr_train_aug = self.assert_train_augmented()
         print("Train data augmented?", corr_train_aug)
-        truth_agree = corr_char and corr_font and corr_frag and corr_train_aug
+        truth_agree = corr_char and corr_font and corr_frag
         return True if truth_agree else False
 
     def split_data_fragments(self) -> None:
@@ -256,7 +256,8 @@ class DatasetBuilder:
                 if new_len < 160:
                     reps = 4 - new_len // 50
                     self.augmenter.elastic_morphs(letter_dir, reps)
-            except:
+            except Exception as e:
+                print(e)
                 continue
 
 
@@ -268,4 +269,5 @@ if __name__ == "__main__":
         data_build.split_data_characters()
         data_build.split_data_fragments()
         data_build.create_font_data()
+    if not data_build.assert_train_augmented():
         data_build.augment_train_data()
