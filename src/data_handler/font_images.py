@@ -32,7 +32,7 @@ class FontImages:
         """Write a .jpeg image for each character in the font character set."""
         font = ImageFont.truetype(str(self.font_file), 45, encoding="utf-8")
         for letter in self.hebrew.letter_li:
-            (self.training_folder / letter).mkdir(parents=True, exists_ok=True)
+            (self.training_folder / letter).mkdir(parents=True, exist_ok=True)
 
         for i in range(len(self.hebrew.font_li)):
             letter_path = self.training_folder / Path(self.hebrew.letter_li[i])
@@ -74,7 +74,7 @@ class FontImages:
 
             for rep in range(self.repetitions):
                 res = elastic_morphing(img, self.amp, self.sigma, h, w)  # morph image
-                cv.imwrite(char_path / f"{char}{rep}.jpeg", res)  # write result to disk
+                cv.imwrite(str(char_path / f"{char}{rep}.jpeg"), res)  # write result to disk
 
 
 if __name__ == "__main__":
@@ -83,4 +83,4 @@ if __name__ == "__main__":
     try:
         font_img.augment_data()
     except:
-        pass
+        print("Augmentation failed!")

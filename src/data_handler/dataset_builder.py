@@ -3,7 +3,6 @@ import re
 import shutil
 import sys
 from pathlib import Path
-from types import new_class
 from typing import Dict, List
 
 import requests
@@ -110,7 +109,7 @@ class DatasetBuilder:
                     shutil.unpack_archive(read_path, write_path)
                 read_path.unlink()  # delete original file
             except OSError:
-                print(f"File doest not exist at {read_path}")
+                print(f"Did not unpack {read_path}")
 
     def split_data_characters(self) -> None:
         """Split labelled character data into train, dev (validation) and test sets."""
@@ -119,7 +118,7 @@ class DatasetBuilder:
             Path(os.environ["DATA_PATH"]) / "characters" / "monkbrill2"
         )
         for directory in character_path.iterdir():
-            shutil.move(directory, read_path)
+            shutil.move(str(directory.resolve()), str(read_path.resolve()))
         character_path.rmdir()
 
         for letter_dir in read_path.iterdir():
@@ -159,6 +158,17 @@ class DatasetBuilder:
                 return False
         return True
 
+    def assert_train_augmented(self) -> bool:
+        """Assert that the train data is augmented."""
+        dalet = Path(os.environ["DATA_PATH"]) / "characters" / "train" / "Dalet"
+        truth_value = False
+        try:
+            if len(list(dalet.iterdir())) != 72: # downloaded number of chars
+                truth_value = True
+        except FileNotFoundError:
+            pass # this is ok because we handle the truth_value
+        return truth_value
+
     def assert_data_correct(self) -> bool:
         """Assert that all data exists and is in the correct format."""
         corr_char = self.assert_data_characters_correct()
@@ -166,8 +176,11 @@ class DatasetBuilder:
         corr_font = FontImages().assert_data_correct()
         print("Font data correct?", corr_font)
         corr_frag = self.assert_data_fragments_correct()
-        print("Frag data correc?", corr_frag)
-        return True if corr_char and corr_font and corr_frag else False
+        print("Fragment data correct?", corr_frag)
+        corr_train_aug = self.assert_train_augmented()
+        print("Train data augmented?", corr_train_aug)
+        truth_agree = corr_char and corr_font and corr_frag and corr_train_aug
+        return True if truth_agree else False
 
     def split_data_fragments(self) -> None:
         """Split DSS fragments into train, dev (validation) and test sets."""
@@ -198,7 +211,7 @@ class DatasetBuilder:
         ]
         for idx, frag_paths in enumerate(split_indices):
             for frag in frag_paths:
-                shutil.move(frag, read_path / self.data_split[idx] / frag)
+                shutil.move(frag, read_path / list(self.data_split.keys())[idx] / frag.name)
 
         (read_path / "image-data").rmdir()  # delete empty folder
 
@@ -239,7 +252,6 @@ class DatasetBuilder:
                     self.augmenter.dilate_image(img_path,3,max_kernel)
                     self.augmenter.erosion_image(img_path,3,max_kernel)
             new_len = len(list(letter_dir.iterdir()))
-            print(new_len)
             try: # to make the program runnable if you are not on linux
                 if new_len < 160:
                     reps = 4 - new_len // 50
@@ -256,7 +268,4 @@ if __name__ == "__main__":
         data_build.split_data_characters()
         data_build.split_data_fragments()
         data_build.create_font_data()
-    
-    dalet = Path(os.environ["DATA_PATH"]) / "characters" / "train" / "Dalet"
-    if len(list(dalet.iterdir())) == 72:
         data_build.augment_train_data()

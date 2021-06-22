@@ -40,8 +40,6 @@ class Augmenter:
     def elastic_morphs(self, dir_path, reps):
         """Repeatedly apply morphing to character images of a font."""
         img_paths = glob(f"{dir_path}/*.jpg")
-        print(img_paths)
-        exit()
         for img_path in img_paths:
             img = cv.imread(str(img_path))
             h, w, _ = img.shape  # image height and width
