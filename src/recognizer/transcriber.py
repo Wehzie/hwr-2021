@@ -58,8 +58,8 @@ if __name__ == "__main__":
 
     for i in range(len(input)):
         file_name = paths[i].name
-        fragment_line, fragment_word, current_char = file_name.split("_")
-        fragment_line = int(fragment_line.replace("characterL", ""))
+        _, fragment_line, fragment_word, current_char = file_name.split("_")
+        fragment_line = int(fragment_line.replace("L", ""))
         fragment_word = int(fragment_word.replace("W", ""))
         pred = np.argmax(transcriber.recognizer.predict(input[i]), axis=1)[0]
         print(pred)
