@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from sklearn.metrics import classification_report
 
 from dotenv import load_dotenv
 from tensorflow import keras
@@ -56,8 +57,8 @@ class TrainTest:
             self.dataset_builder.split_data_characters()
             self.dataset_builder.split_data_fragments()
             self.dataset_builder.create_font_data()
-        dalet = (self.read_path / "train" / "Dalet")
-        if len(list(dalet.iterdir())) == 72:
+            
+        if not self.dataset_builder.assert_train_augmented():
             self.dataset_builder.augment_train_data()
         X_pretrain, y_pretrain, X_train, y_train, X_dev, y_dev, X_test, y_test = tuple(
             [] for l in range(8)
@@ -140,21 +141,54 @@ class TrainTest:
             epochs=10,
             callbacks=[es],
         )
-
+        
         print(self.recognizer.get_summary())
-        # Confusion matrix on dev data with final model
-        y_pred = self.recognizer.predict(self.X_dev)
-        y_predict = np.argmax(y_pred, axis=1)
+        model_name = self.recognizer.get_model_name()
+        self.recognizer.save_model(model_name)
+
+        self.model_analysis(model_name)
+
+    def model_analysis(self, model_name: str) -> None:
+        """Analyse how well a model performed."""
+        # probabilites
+        y_pred_prob = self.recognizer.predict(self.X_dev)
+        # most likely class
+        y_pred = np.argmax(y_pred_prob, axis=1)
+        # compare true and predicted classes on dev set
+
+        # path handling for writing to file
+        output_dir = Path(os.environ["MODEL_DATA"]) / model_name
+        out_name = "classification_report.txt"
+        out_path = output_dir / out_name
+        
+        # create, print and write to file a sklearn classification report
+        print(set(self.y_dev) - set(y_pred))
+        report = classification_report(self.y_dev, y_pred)
+        print(report)
+        with open(out_path, "w") as f:
+            f.write(report)
+
+        self.make_heatmap(y_pred, output_dir)
+
+    def make_heatmap(self, y_pred: np.ndarray, output_dir: Path) -> None:
+        """
+        Create a heatmap on correct character prediction frequency.
+
+        y_pred: predicted class
+        return: None. Saves figure
+        """
         df = pd.crosstab(
                 pd.Series(self.y_dev),
-                pd.Series(y_predict),
+                pd.Series(y_pred),
                 rownames=["True:"],
                 colnames=["Predicted:"],
                 margins=True,
             )
-        print(df)
         sns.heatmap(df.iloc[:-1,:-1], annot=True, fmt="g", cmap='viridis')
-        plt.show()
+        # path handling for writing to file
+        out_name = "heatmap.png"
+        out_path = output_dir / out_name
+        plt.savefig(out_path)
 
     def test_model(self) -> None:
         """
@@ -167,4 +201,3 @@ class TrainTest:
 if __name__ == "__main__":
     trainer = TrainTest()
     trainer.train_model()
-    trainer.recognizer.save_model("model1")

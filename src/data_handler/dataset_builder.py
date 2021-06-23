@@ -240,6 +240,7 @@ class DatasetBuilder:
     
     def augment_train_data(self):
         """Augment and balance the train data"""
+        print("Augmenting train data.")
         read_path: Path = Path(os.environ["DATA_PATH"]) / "characters" / "train"
         for letter_dir in read_path.iterdir():
             original_images = list(letter_dir.iterdir())
@@ -257,6 +258,7 @@ class DatasetBuilder:
                     reps = 4 - new_len // 50
                     self.augmenter.elastic_morphs(letter_dir, reps)
             except:
+                print("Not performing elastic morphing.")
                 continue
 
 

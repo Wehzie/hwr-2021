@@ -141,6 +141,7 @@ data/*
 
 # images
 *.png
+*.jpg
 *.jpeg
 !ARCHITECTURE.png
 
