@@ -12,6 +12,7 @@ sys.path.append(str(Path(__file__).parents[2].resolve()))
 from src.data_handler.hebrew import HebrewAlphabet
 from src.data_handler.imagemorph.imagemorph import elastic_morphing
 
+
 class Augmenter:
     """Dead Sea Scrolls data augmenter."""
 
@@ -24,7 +25,7 @@ class Augmenter:
     def erosion_image(self, img_path, min_kernel_size, max_kernel_size) -> None:
         """Erode the image at the given path."""
         original = cv.imread(img_path)
-        for i in range(min_kernel_size, max_kernel_size+1):
+        for i in range(min_kernel_size, max_kernel_size + 1):
             kernel = np.ones((i, i), np.uint8)
             eroded_img = cv.erode(original, kernel, iterations=1)
             cv.imwrite(f"{img_path}e{i}.jpg", eroded_img)
@@ -32,7 +33,7 @@ class Augmenter:
     def dilate_image(self, img_path, min_kernel_size, max_kernel_size) -> None:
         """Dilate the image at the given path."""
         original = cv.imread(img_path)
-        for i in range(min_kernel_size, max_kernel_size+1):
+        for i in range(min_kernel_size, max_kernel_size + 1):
             kernel = np.ones((i, i), np.uint8)
             dilated_img = cv.dilate(original, kernel, iterations=1)
             cv.imwrite(f"{img_path}d{i}.jpg", dilated_img)
@@ -41,7 +42,7 @@ class Augmenter:
         """Repeatedly apply morphing to character images of a font."""
         img_paths = glob(f"{dir_path}/*.jpg")
         amp = 2.5  # the amplitude of the deformatio
-        sigma = (10)  # the local image area affected (spread of the gaussian smoothing kernel)
+        sigma = 10  # the local image area affected (spread of the gaussian smoothing kernel)
         for img_path in img_paths:
             print(img_path)
             img = cv.imread(str(img_path))

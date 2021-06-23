@@ -56,7 +56,7 @@ class TrainTest:
             self.dataset_builder.split_data_characters()
             self.dataset_builder.split_data_fragments()
             self.dataset_builder.create_font_data()
-        dalet = (self.read_path / "train" / "Dalet")
+        dalet = self.read_path / "train" / "Dalet"
         if len(list(dalet.iterdir())) == 72:
             self.dataset_builder.augment_train_data()
         X_pretrain, y_pretrain, X_train, y_train, X_dev, y_dev, X_test, y_test = tuple(
@@ -146,14 +146,14 @@ class TrainTest:
         y_pred = self.recognizer.predict(self.X_dev)
         y_predict = np.argmax(y_pred, axis=1)
         df = pd.crosstab(
-                pd.Series(self.y_dev),
-                pd.Series(y_predict),
-                rownames=["True:"],
-                colnames=["Predicted:"],
-                margins=True,
-            )
+            pd.Series(self.y_dev),
+            pd.Series(y_predict),
+            rownames=["True:"],
+            colnames=["Predicted:"],
+            margins=True,
+        )
         print(df)
-        sns.heatmap(df.iloc[:-1,:-1], annot=True, fmt="g", cmap='viridis')
+        sns.heatmap(df.iloc[:-1, :-1], annot=True, fmt="g", cmap="viridis")
         plt.show()
 
     def test_model(self) -> None:
