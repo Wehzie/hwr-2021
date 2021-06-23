@@ -74,7 +74,9 @@ class FontImages:
 
             for rep in range(self.repetitions):
                 res = elastic_morphing(img, self.amp, self.sigma, h, w)  # morph image
-                cv.imwrite(str(char_path / f"{char}{rep}.jpeg"), res)  # write result to disk
+                cv.imwrite(
+                    str(char_path / f"{char}{rep}.jpeg"), res
+                )  # write result to disk
 
 
 if __name__ == "__main__":

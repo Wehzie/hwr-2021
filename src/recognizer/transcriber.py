@@ -49,19 +49,20 @@ if __name__ == "__main__":
     args = ArgParser(description="Input directory with character images").parse_args()
 
     transcriber = Transcriber()
-    paths, input = transcriber.load_images(Path(args.input_dir).name)
+    paths, input = transcriber.load_images(Path(args.input_dir))
 
     current_line, current_word = 0, 0
     file = open(
-        f"{args.input_dir}_characters.docx", "w"
+        f"{args.input_dir}_characters.txt", "w", encoding="utf8"
     )  # Check if this is full path or name
 
     for i in range(len(input)):
         file_name = paths[i].name
-        fragment_line, fragment_word, current_char = file_name.split("_")
-        fragment_line = int(fragment_line.replace("characterL", ""))
+        _, fragment_line, fragment_word, current_char = file_name.split("_")
+        fragment_line = int(fragment_line.replace("L", ""))
         fragment_word = int(fragment_word.replace("W", ""))
-        pred = np.argmax(transcriber.recognizer.predict(input[i]), axis=1)
+        pred = np.argmax(transcriber.recognizer.predict(input[i]), axis=1)[0]
+        print(pred)
         uni_char = Hebrew.unicode_dict[Hebrew.letter_li[pred]]
         if fragment_line > current_line:
             file.write(f"\n{uni_char}")

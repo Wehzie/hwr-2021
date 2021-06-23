@@ -110,12 +110,7 @@ class RecognizerModel:
         model.add(keras.layers.BatchNormalization())
 
         # Softmax-layer (output)
-        model.add(
-            layers.Dense(
-                units=27,
-                activation="softmax"
-            )
-        )
+        model.add(layers.Dense(units=27, activation="softmax"))
         self.model = model
 
     def get_summary(self) -> str:

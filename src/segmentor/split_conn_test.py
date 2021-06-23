@@ -29,7 +29,7 @@ def middle_split(char: np.ndarray) -> List[np.ndarray]:
     return [char[:, :middle], char[:, middle:]]
 
 
-def split_connected(chars: List[np.ndarray]) -> List[np.ndarray]: 
+def split_connected(chars: List[np.ndarray]) -> List[np.ndarray]:
     split_chars = []
     for char in chars:
         pixels = np.where(char == 0)
@@ -39,7 +39,7 @@ def split_connected(chars: List[np.ndarray]) -> List[np.ndarray]:
         #     split_chars.extend(middle_split(char))
         # else:
         split_chars.append(char)
-        #print(f" max {height[0].max() - height[0].min()} total height: {char.shape[0]}")
+        # print(f" max {height[0].max() - height[0].min()} total height: {char.shape[0]}")
     return split_chars
 
 
@@ -52,10 +52,10 @@ def extract_characters(char: np.ndarray, read_ord="r2l") -> List[np.ndarray]:
 
     characters = split_connected(img)
 
-        # cv.imwrite(
-        #    str((out_dir / f"{path_stem}c{i}.png").resolve()),
-        #    cv.bitwise_not(clean),
-        # )
+    # cv.imwrite(
+    #    str((out_dir / f"{path_stem}c{i}.png").resolve()),
+    #    cv.bitwise_not(clean),
+    # )
     return characters
 
 
@@ -64,10 +64,7 @@ if __name__ == "__main__":
         description="Extract characters from binarized dead sea scroll pictures"
     ).parse_args()
 
-
-
-    ### CHANGE: load only split images 
-
+    ### CHANGE: load only split images
 
     # Extract lines
     for img_path in args.input_dir.glob("*binarized.jpg"):  # For each fragment
@@ -93,4 +90,9 @@ if __name__ == "__main__":
                 for z in range(len(chars)):
                     char = chars[z]
                     # print(np.sum(char), i,j,z, char.shape)
-                    cv.imwrite(str((character_path / f"characterL{i}_W{j}_C{z}.png").resolve()), char)
+                    cv.imwrite(
+                        str(
+                            (character_path / f"characterL{i}_W{j}_C{z}.png").resolve()
+                        ),
+                        char,
+                    )

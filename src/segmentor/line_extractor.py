@@ -28,7 +28,7 @@ class ArgParser(Tap):
 def get_bounding_boxes(img: np.ndarray, max_height=250, min_area=10000):
     """Get bounding boxes of text lines.
 
-    Takes a thresholded image and returns an array of bounding boxes.
+    Takes an image and returns an array of bounding boxes.
     Bounding boxes with height smaller than max_height are split,
     boxes with area smaller than min_area are discarded.
     """
@@ -99,7 +99,7 @@ def clean_boxes(img: np.ndarray, box: BoundingBox):
 
 
 def overlay_hough_lines(img: np.ndarray, lines):
-    """Add the extracted hough lines to the original image.
+    """Add the extracted Hough lines to the original image.
 
     Only used for testing purposes.
     """

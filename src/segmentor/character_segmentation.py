@@ -210,5 +210,5 @@ if __name__ == "__main__":
     write_params = WriteParams()
 
     # extract characters for each fragment
-    for in_frag_path in args.input_dir.glob("*binarized.jpg"):
+    for in_frag_path in args.input_dir.glob("*.jpg"):
         extract_chars_from_fragment(in_frag_path, args.output_dir, write_params)
