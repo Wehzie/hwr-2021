@@ -81,7 +81,7 @@ def get_bounding_boxes(
 
 
 def extract_words(img, read_ord="r2l") -> List[np.ndarray]:
-    """Extract word images from a text lien image.
+    """Extract word images from a text line image.
 
     img_path: Path to a line image.
     read_ord: reading order (direction). right to left (r2l) or left to right (l2r)

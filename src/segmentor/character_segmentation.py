@@ -14,6 +14,9 @@ from src.segmentor.bounding_box import BoundingBox
 from src.segmentor.word_from_line import extract_words
 from src.segmentor.line_extractor import extract_lines
 
+MIN_WIDTH = 16
+MAX_RATIO = 0.725
+
 
 class ArgParser(Tap):
     """Argument parser for character segmenter."""
@@ -26,13 +29,16 @@ class ArgParser(Tap):
         self.add_argument("input_dir")
         self.add_argument("output_dir")
 
+
 @dataclass
 class WriteParams:
     """Control what types of data are saved to file."""
+
     frag: bool = True
     line: bool = True
     word: bool = True
     char: bool = True
+
 
 def get_bounding_boxes(img: np.ndarray, min_pixel=120) -> List[BoundingBox]:
     """Get bounding boxes of characters in a word image.
@@ -75,56 +81,73 @@ def get_bounding_boxes(img: np.ndarray, min_pixel=120) -> List[BoundingBox]:
     return boxes
 
 
-def split_non_connected(chars: List[np.ndarray]) -> List[np.ndarray]:
-    return chars
-
-
 def middle_split(char: np.ndarray) -> List[np.ndarray]:
     middle = char.shape[1] // 2
     return [char[:, :middle], char[:, middle:]]
 
 
-def split_connected(chars: List[np.ndarray]) -> List[np.ndarray]: 
+def split_connected(chars: List[np.ndarray], min_width: int) -> List[np.ndarray]:
     split_chars = []
     for char in chars:
         pixels = np.where(char == 0)
         height = pixels[0].max() - pixels[0].min()
         width = char.shape[1]
-        # if width > 1.2 * height:
-        #     split_chars.extend(middle_split(char))
-        # else:
-        split_chars.append(char)
-        #print(f" max {height[0].max() - height[0].min()} total height: {char.shape[0]}")
+        if width > 1.2 * height and width > 2 * min_width:
+            split_chars.extend(middle_split(char))
+        else:
+            split_chars.append(char)
     return split_chars
 
 
-def extract_characters_from_word(img: np.ndarray, read_ord="r2l") -> List[np.ndarray]:
-    """Load a word image and return extracted characters."""
+def get_conn_components(img: np.ndarray, max_height=250, min_area=10000):
+
+    img = img.copy()
+
+    # Estimate connected components
+    (num_labels, labels, stats, centroids) = cv.connectedComponentsWithStats(
+        img, 8, cv.CV_32S
+    )
+
+    imgs = []
+    for comp_id in range(1, num_labels):
+        component_mask = (labels == comp_id).astype("uint8") * 255
+        x = stats[comp_id, cv.CC_STAT_LEFT]
+        y = stats[comp_id, cv.CC_STAT_TOP]
+        w = stats[comp_id, cv.CC_STAT_WIDTH]
+        h = stats[comp_id, cv.CC_STAT_HEIGHT]
+        sub_mask = BoundingBox(x, y, w, h).image_slice(component_mask)
+        blank = np.zeros((h, w), dtype=np.uint8)
+        masked = np.where(sub_mask, 255, blank)
+        imgs.append(masked)
+
+    return imgs
+
+
+def extract_characters_from_word(
+    img: np.ndarray, read_ord="r2l", method="cca"
+) -> List[np.ndarray]:
+    """Load a word image and return extracted characters using vertical whitespace or CCA."""
 
     # Threshold and invert
     img = cv.threshold(img, 127, 255, cv.THRESH_BINARY)[1]
     img = cv.bitwise_not(img)
 
-    boxes = get_bounding_boxes(img)
+    if method == "cca":
+        imgs = get_conn_components(img)
+    else:
+        boxes = get_bounding_boxes(img)
+        imgs = [box.image_slice(img) for box in boxes]
 
     if read_ord == "r2l":  # words in order right to left
-        boxes = reversed(boxes)
+        boxes = reversed(imgs)
 
     characters: List[np.ndarray] = []
-    for i, box in enumerate(boxes):
-        # clean = clean_boxes(img, box)
-        clean = box.image_slice(img)
-        inversed = cv.bitwise_not(clean)
-        if box.w > 16:
+    for i, char_img in enumerate(imgs):
+        inversed = cv.bitwise_not(char_img)
+        if char_img.shape[1] > MIN_WIDTH:
             characters.append(inversed)
 
-    characters = split_non_connected(characters)
-    characters = split_connected(characters)
-
-        # cv.imwrite(
-        #    str((out_dir / f"{path_stem}c{i}.png").resolve()),
-        #    cv.bitwise_not(clean),
-        # )
+    characters = split_connected(characters, MIN_WIDTH)
     return characters
 
 
@@ -172,17 +195,20 @@ def extract_chars_from_fragment(in_frag_path, output_dir, w_par):
                 # write character images to output directory
                 if w_par.char == True:
                     char_path = character_path / f"character_L{i}_W{j}_C{z}.png"
-                    cv.imwrite(str(char_path.resolve()), char)
+                    area = char.shape[0] * char.shape[1]
+                    pix_count = area - (np.sum(char) / 255)
+
+                    if pix_count / area < MAX_RATIO:
+                        cv.imwrite(str(char_path.resolve()), char)
+
 
 if __name__ == "__main__":
     args = ArgParser(
         description="Extract characters from binarized dead sea scroll pictures."
     ).parse_args()
-    
+
     write_params = WriteParams()
 
     # extract characters for each fragment
-    for in_frag_path in args.input_dir.glob("*binarized.jpg"): 
+    for in_frag_path in args.input_dir.glob("*binarized.jpg"):
         extract_chars_from_fragment(in_frag_path, args.output_dir, write_params)
-
-    

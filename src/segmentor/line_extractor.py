@@ -160,7 +160,7 @@ def correct_rotation(img: np.ndarray, hough_threshold: int):
     # binned = np.digitize(thetas, bins)
     # rotation = np.degrees(bins[stats.mode(binned).mode[0]])
     # rotation = np.degrees(np.mean(bins[np.array(Counter(binned).most_common(3))[:, 0]]))
-    print(f"Avg. rotation based on {lines[:, 0, 1].size} lines: {rotation} deg.")
+    # print(f"Avg. rotation based on {lines[:, 0, 1].size} lines: {rotation} deg.")
     return ndimage.rotate(img, rotation, cval=255)
 
 
