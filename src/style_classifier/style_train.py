@@ -50,25 +50,18 @@ def plot_history(history, plot_path: Path) -> None:
     plt.savefig(plot_path)
 
 
-def load_data():
-    pass
-
-def set_model():
-    pass
-
-def model_analysis():
-    pass
-
-def train_style_classifier() -> None:
-    """Train the style classifier."""
-    ap = ArgParser()
-    args = ap.parse_args()
-
+def load_data(input_path: Path, 
+    save_test_indices: Path = None, test_size=0.33) -> tuple:
+    """
+    Load the style data.
+    Split into train and test.
+    Return data as X and labels as y.
+    """
     x = []  # character images
     y = []  # character labels
 
-    print(f"Loading jpeg images from {args.input_path}")
-    for file_path in args.input_path.glob("**/*.jpg"):
+    print(f"Loading jpeg images from {input_path}")
+    for file_path in input_path.glob("**/*.jpg"):
         img = cv.imread(str(file_path.resolve()), cv.IMREAD_COLOR)
         img = cv.resize(img, CV_IMG_SIZE)
         x.append((img, file_path.parent.name))
@@ -77,17 +70,21 @@ def train_style_classifier() -> None:
     y = np.array(y)
     x_img = np.array([x[0] for x in x])
     x_char = np.array([x[1] for x in x])
-
-    strat_split = StratifiedShuffleSplit(n_splits=1, test_size=0.33)
+    
+    # data split
+    strat_split = StratifiedShuffleSplit(n_splits=1, test_size=test_size)
     for train_index, test_index in strat_split.split(x, y):
         x_train_img, x_test_img = x_img[train_index], x_img[test_index]
         x_test_char = x_char[test_index]
         y_train, y_test = y[train_index], y[test_index]
         test_idx = test_index
-        if args.save_test_indices is not None:
-            np.save(args.save_test_indices, np.array(test_idx))
+        if save_test_indices is not None:
+            np.save(save_test_indices, np.array(test_idx))
+    
+    return x_train_img, y_train, x_test_img, x_test_char, y_test
 
-    print("Training and validating on characters.")
+def initialize_model() -> StyleClassifierModel:
+    """Initialize the style classifier."""
     style_model = StyleClassifierModel()
     style_model.set_model(IMG_SIZE, 0.2)
     style_model.model.compile(
@@ -95,6 +92,46 @@ def train_style_classifier() -> None:
         loss=keras.losses.SparseCategoricalCrossentropy(),
         metrics=["accuracy"],
     )
+    return style_model
+
+def model_analysis(history, style_model: StyleClassifierModel,
+    x_test_img, x_test_char, y_test,
+    save_plot: bool, save_df: bool) -> None:
+    """Analyse the model and save analyses to file."""
+    
+    if save_plot is not None:
+        print(f"Saving history plot to {save_plot}")
+        plot_history(history, save_plot)
+
+    # Confusion matrix on test data with final model
+    y_pred = np.argmax(style_model.predict(x_test_img), axis=1)
+
+    print(
+        pd.crosstab(
+            pd.Series(HebrewStyles.style_li[y] for y in y_test),
+            pd.Series(HebrewStyles.style_li[y] for y in y_pred),
+            rownames=["True:"],
+            colnames=["Predicted:"],
+            margins=True,
+        )
+    )
+
+    if save_df is not None:
+        print(f"Saving dataframe to {save_df}")
+        df = pd.DataFrame(data={"char": x_test_char, "true": y_test, "pred": y_pred})
+        df.to_pickle(save_df)
+
+def train_style_classifier() -> None:
+    """Train the style classifier."""
+    ap = ArgParser()
+    args = ap.parse_args()
+
+    # load data
+    (x_train_img, y_train, 
+    x_test_img, x_test_char, y_test) = load_data(args.input_path)
+
+    # initialize model
+    style_model = initialize_model()
 
     es = keras.callbacks.EarlyStopping(
         monitor="val_accuracy",
@@ -112,6 +149,7 @@ def train_style_classifier() -> None:
     )
 
     # Train the model
+    print("Training and validating on characters.")
     history = style_model.model.fit(
         x_train_img,
         y_train,
@@ -121,28 +159,9 @@ def train_style_classifier() -> None:
         callbacks=[es],
     )
 
-    if args.save_plot is not None:
-        print(f"Saving history plot to {args.save_plot}")
-        plot_history(history, args.save_plot)
-
-    # Confusion matrix on test data with final model
-    y_pred = np.argmax(style_model.predict(x_test_img), axis=1)
-
-    print(
-        pd.crosstab(
-            pd.Series(HebrewStyles.style_li[y] for y in y_test),
-            pd.Series(HebrewStyles.style_li[y] for y in y_pred),
-            rownames=["True:"],
-            colnames=["Predicted:"],
-            margins=True,
-        )
-    )
-
-    if args.save_df is not None:
-        print(f"Saving dataframe to {args.save_df}")
-        df = pd.DataFrame(data={"char": x_test_char, "true": y_test, "pred": y_pred})
-        df.to_pickle(args.save_df)
-
+    # analyse and save run
+    model_analysis(history, style_model, x_test_img, x_test_char,
+    y_test, args.save_plot, args.save_df)
 
 if __name__ == "__main__":
     train_style_classifier()
