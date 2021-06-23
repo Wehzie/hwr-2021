@@ -7,6 +7,7 @@ from typing import Dict, List
 
 import requests
 from dotenv import load_dotenv
+from scipy.sparse import data
 
 sys.path.append(str(Path(__file__).parents[2].resolve()))
 
@@ -82,15 +83,20 @@ class DatasetBuilder:
         except OSError:
             print(f"Error: {list(Path(os.environ['DATA_PATH']).iterdir())}")
 
+    # TODO: Rename this method to download_char_recog_data()
     def download_all_data(self) -> None:
         """Download the character-images, fragment images and font data."""
         print("Download in progress.")
         self.download_data(os.environ["NC_TOKEN_TRAIN_CHARACTERS"], "nextcloud")
         self.download_data(os.environ["NC_TOKEN_TRAIN_FRAGMENTS"], "nextcloud")
-        # self.download_data(os.environ["NC_TOKEN_TRAIN_CHARACTER_STYLE"], "nextcloud")
-        # self.download_data(os.environ["NC_TOKEN_TRAIN_FRAGMENT_STYLE"], "nextcloud")
         self.download_data(os.environ["HABBAKUK_URL"], "generic_url")
         print("Download complete!")
+    
+    def download_style_data(self) -> None:
+        """Download the style character and fragment data."""
+        print("Download in progress.")
+        self.download_data(os.environ["NC_TOKEN_TRAIN_CHARACTER_STYLE"], "nextcloud")
+        self.download_data(os.environ["NC_TOKEN_TRAIN_FRAGMENT_STYLE"], "nextcloud")
 
     def unpack_rename_data(self):
         """Unpack and rename downloaded data.
@@ -261,6 +267,14 @@ class DatasetBuilder:
                     self.augmenter.elastic_morphs(letter_dir, reps)
             except Exception as e:
                 print(e)
+    
+    def assert_style_data_correct(self) -> bool:
+        """Assert that the style data exists."""
+        style_chars = Path(os.environ["DATA_PATH"]) / "character_style"
+        style_frags = Path(os.environ["DATA_PATH"]) / "fragment_styles"
+        if style_chars.exists() and style_frags.exists():
+            return True
+        return False
 
 
 if __name__ == "__main__":
@@ -273,3 +287,5 @@ if __name__ == "__main__":
         data_build.create_font_data()
     if not data_build.assert_train_augmented():
         data_build.augment_train_data()
+    if not data_build.assert_style_data_correct():
+        data_build.download_style_data()

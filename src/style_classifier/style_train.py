@@ -2,6 +2,9 @@ import os
 import sys
 from pathlib import Path
 
+# NOTE: Why are all TensorFlow messages suppressed?
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+
 import cv2 as cv
 import numpy as np
 import pandas as pd
@@ -9,10 +12,12 @@ from matplotlib import pyplot as plt
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.utils import class_weight
 from tap import Tap
+from tensorflow import keras
 
 sys.path.append(str(Path(__file__).parents[2].resolve()))
 
 from src.data_handler.hebrew import HebrewStyles
+from src.style_classifier.model import StyleClassifierModel
 
 IMG_SIZE = (60, 40)  # TODO: think about correct resizing method
 CV_IMG_SIZE = (IMG_SIZE[1], IMG_SIZE[0])
@@ -21,7 +26,7 @@ CV_IMG_SIZE = (IMG_SIZE[1], IMG_SIZE[0])
 class ArgParser(Tap):
     """Argument parser for the style classifier trainer."""
 
-    input_path: Path = Path("data/style-data")  # input data folder
+    input_path: Path = Path("data/character_styles")  # input data folder
     save_test_indices: Path  # if given, where numpy array with test indices is saved
     save_plot: Path  # if given, where training history plot image is saved
     save_df: Path  # if given, where dataframe with model output is saved
@@ -45,13 +50,22 @@ def plot_history(history, plot_path: Path) -> None:
     plt.savefig(plot_path)
 
 
-def main() -> None:
+def load_data():
+    pass
+
+def set_model():
+    pass
+
+def model_analysis():
+    pass
+
+def train_style_classifier() -> None:
     """Train the style classifier."""
     ap = ArgParser()
     args = ap.parse_args()
 
-    x = []
-    y = []
+    x = []  # character images
+    y = []  # character labels
 
     print(f"Loading jpeg images from {args.input_path}")
     for file_path in args.input_path.glob("**/*.jpg"):
@@ -74,13 +88,6 @@ def main() -> None:
             np.save(args.save_test_indices, np.array(test_idx))
 
     print("Training and validating on characters.")
-
-    # Only import tf / keras after arguments are parsed
-    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
-    from tensorflow import keras
-
-    from model import StyleClassifierModel
-
     style_model = StyleClassifierModel()
     style_model.set_model(IMG_SIZE, 0.2)
     style_model.model.compile(
@@ -138,4 +145,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    train_style_classifier()
