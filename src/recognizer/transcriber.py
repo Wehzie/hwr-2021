@@ -17,10 +17,12 @@ class ArgParser(Tap):
     """Argument parser for the transcriber."""
 
     input_dir: Path  # Directory with character images
+    output_dir: Path  # Directory to which txt is saved
 
     def configure(self) -> None:
         """Configure the argument parser."""
         self.add_argument("input_dir")
+        self.add_argument("output_dir")
 
 
 class Transcriber:
@@ -37,7 +39,6 @@ class Transcriber:
         image_paths = []
         for img_path in os_sorted(input_dir.glob("*.png")):
             image_paths.append(img_path)
-            print(f"Processing {img_path.name}")
             img = cv.imread(str(img_path))
             img = cv.resize(img, (60, 70))
             img = np.expand_dims(img, axis=0)
@@ -53,7 +54,9 @@ if __name__ == "__main__":
 
     current_line, current_word = 0, 0
     file = open(
-        f"{args.input_dir}_characters.txt", "w", encoding="utf8"
+        f"{args.output_dir}/{args.input_dir.parent.name}_characters.txt",
+        "w",
+        encoding="utf8",
     )  # Check if this is full path or name
 
     for i in range(len(input)):
@@ -62,7 +65,6 @@ if __name__ == "__main__":
         fragment_line = int(fragment_line.replace("L", ""))
         fragment_word = int(fragment_word.replace("W", ""))
         pred = np.argmax(transcriber.recognizer.predict(input[i]), axis=1)[0]
-        print(pred)
         uni_char = Hebrew.unicode_dict[Hebrew.letter_li[pred]]
         if fragment_line > current_line:
             file.write(f"\n{uni_char}")
