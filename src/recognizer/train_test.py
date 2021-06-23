@@ -22,13 +22,12 @@ from src.recognizer.model import RecognizerModel
 
 
 class TrainTest:
-    """
-    Train the hebrew character recognizer.
-    """
+    """Train the Hebrew character recognizer."""
 
     load_dotenv()
 
     def __init__(self) -> None:
+        """Initialize the TrainTest."""
         self.hebrew = HebrewAlphabet()
         self.dataset_builder = DatasetBuilder()
         self.recognizer = RecognizerModel()
@@ -109,10 +108,7 @@ class TrainTest:
         )
 
     def train_model(self) -> None:
-        """
-        Train on training set (X_train, y_train) and
-        validate on dev set (X_dev, y_dev).
-        """
+        """Train on X_train, y_train and validate on X_dev, y_dev."""
         self.recognizer.set_model((self.img_size[1], self.img_size[0]), 0.3)
         self.recognizer.model.compile(
             optimizer=keras.optimizers.Adam(),
@@ -154,12 +150,10 @@ class TrainTest:
         )
         print(df)
         sns.heatmap(df.iloc[:-1, :-1], annot=True, fmt="g", cmap="viridis")
-        plt.show()
+        plt.savefig(Path(os.environ["MODEL_DATA"]) / "heatmap.png")
 
     def test_model(self) -> None:
-        """
-        Test a trained model on the traing set (X_train, y_train).
-        """
+        """Test a trained model on the training set (X_train, y_train)."""
         print(self.recognizer.get_summary())
         self.recognizer.model.evaluate(self.X_test, self.y_test)
 
