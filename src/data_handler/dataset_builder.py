@@ -163,10 +163,10 @@ class DatasetBuilder:
         dalet = Path(os.environ["DATA_PATH"]) / "characters" / "train" / "Dalet"
         truth_value = False
         try:
-            if len(list(dalet.iterdir())) != 72: # downloaded number of chars
+            if len(list(dalet.iterdir())) != 72:  # downloaded number of chars
                 truth_value = True
         except FileNotFoundError:
-            pass # this is ok because we handle the truth_value
+            pass  # this is ok because we handle the truth_value
         return truth_value
 
     def assert_data_correct(self) -> bool:
@@ -211,7 +211,9 @@ class DatasetBuilder:
         ]
         for idx, frag_paths in enumerate(split_indices):
             for frag in frag_paths:
-                shutil.move(frag, read_path / list(self.data_split.keys())[idx] / frag.name)
+                shutil.move(
+                    frag, read_path / list(self.data_split.keys())[idx] / frag.name
+                )
 
         (read_path / "image-data").rmdir()  # delete empty folder
 
@@ -237,22 +239,22 @@ class DatasetBuilder:
         if not font_data.assert_data_correct():
             font_data.create_images()
             font_data.augment_data()
-    
+
     def augment_train_data(self):
         """Augment and balance the train data"""
         read_path: Path = Path(os.environ["DATA_PATH"]) / "characters" / "train"
         for letter_dir in read_path.iterdir():
             original_images = list(letter_dir.iterdir())
             length = len(original_images)
-            max_kernel = (240-length)/2/length + 2
+            max_kernel = (240 - length) / 2 / length + 2
             if max_kernel >= 2.6:
                 max_kernel = min(round(max_kernel), 5)
                 for j in original_images:
                     img_path = str(j)
-                    self.augmenter.dilate_image(img_path,3,max_kernel)
-                    self.augmenter.erosion_image(img_path,3,max_kernel)
+                    self.augmenter.dilate_image(img_path, 3, max_kernel)
+                    self.augmenter.erosion_image(img_path, 3, max_kernel)
             new_len = len(list(letter_dir.iterdir()))
-            try: # to make the program runnable if you are not on linux
+            try:  # to make the program runnable if you are not on linux
                 if new_len < 160:
                     reps = 4 - new_len // 50
                     self.augmenter.elastic_morphs(letter_dir, reps)

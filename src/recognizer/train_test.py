@@ -22,13 +22,12 @@ from src.recognizer.model import RecognizerModel
 
 
 class TrainTest:
-    """
-    Train the hebrew character recognizer.
-    """
+    """Train the Hebrew character recognizer."""
 
     load_dotenv()
 
     def __init__(self) -> None:
+        """Initialize the TrainTest."""
         self.hebrew = HebrewAlphabet()
         self.dataset_builder = DatasetBuilder()
         self.recognizer = RecognizerModel()
@@ -56,7 +55,7 @@ class TrainTest:
             self.dataset_builder.split_data_characters()
             self.dataset_builder.split_data_fragments()
             self.dataset_builder.create_font_data()
-        dalet = (self.read_path / "train" / "Dalet")
+        dalet = self.read_path / "train" / "Dalet"
         if len(list(dalet.iterdir())) == 72:
             self.dataset_builder.augment_train_data()
         X_pretrain, y_pretrain, X_train, y_train, X_dev, y_dev, X_test, y_test = tuple(
@@ -109,10 +108,7 @@ class TrainTest:
         )
 
     def train_model(self) -> None:
-        """
-        Train on training set (X_train, y_train) and
-        validate on dev set (X_dev, y_dev).
-        """
+        """Train on X_train, y_train and validate on X_dev, y_dev."""
         self.recognizer.set_model((self.img_size[1], self.img_size[0]), 0.3)
         self.recognizer.model.compile(
             optimizer=keras.optimizers.Adam(),
@@ -146,20 +142,18 @@ class TrainTest:
         y_pred = self.recognizer.predict(self.X_dev)
         y_predict = np.argmax(y_pred, axis=1)
         df = pd.crosstab(
-                pd.Series(self.y_dev),
-                pd.Series(y_predict),
-                rownames=["True:"],
-                colnames=["Predicted:"],
-                margins=True,
-            )
+            pd.Series(self.y_dev),
+            pd.Series(y_predict),
+            rownames=["True:"],
+            colnames=["Predicted:"],
+            margins=True,
+        )
         print(df)
-        sns.heatmap(df.iloc[:-1,:-1], annot=True, fmt="g", cmap='viridis')
-        plt.show()
+        sns.heatmap(df.iloc[:-1, :-1], annot=True, fmt="g", cmap="viridis")
+        plt.savefig(Path(os.environ["MODEL_DATA"]) / "heatmap.png")
 
     def test_model(self) -> None:
-        """
-        Test a trained model on the traing set (X_train, y_train).
-        """
+        """Test a trained model on the training set (X_train, y_train)."""
         print(self.recognizer.get_summary())
         self.recognizer.model.evaluate(self.X_test, self.y_test)
 
