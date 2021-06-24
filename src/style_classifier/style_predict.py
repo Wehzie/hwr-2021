@@ -20,7 +20,7 @@ class ArgParser(Tap):
     """Argument parser for the style predictor."""
 
     input_dir: Path  # Directory that contains segmented characters
-    output_dir: Path  # Directory where prediction docx will be saved
+    output_dir: Path  # Directory where prediction will be saved
 
     def configure(self) -> None:
         """Configure the argument parser."""
@@ -30,9 +30,11 @@ class ArgParser(Tap):
 
 if __name__ == "__main__":
     args = ArgParser(description="Predict style from segmented characters").parse_args()
+    assert args.input_dir.exists(), "Input directory does not exist"
+    assert args.output_dir.exists(), "Output directory does not exist"
 
     imgs = []
-    for file_path in args.input_dir.glob("*png"):
+    for file_path in args.input_dir.glob("*.png"):
         img = cv.imread(str(file_path.resolve()), cv.IMREAD_COLOR)
         img = cv.resize(img, CV_IMG_SIZE)
         imgs.append(img)
@@ -46,7 +48,7 @@ if __name__ == "__main__":
     style_string = HebrewStyles.style_li[style_pred]
 
     file_name = args.input_dir.parents[0].name
-    out_path = args.output_dir / f"{file_name}_style.docx"
+    out_path = args.output_dir / f"{file_name}_style.txt"
     file = out_path.open("w")
     file.write(style_string)
     file.close()

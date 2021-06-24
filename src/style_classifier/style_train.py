@@ -27,6 +27,7 @@ class ArgParser(Tap):
     """Argument parser for the style classifier trainer."""
 
     input_path: Path = Path("data/character_styles")  # input data folder
+    test_split: bool = False
     save_test_indices: Path  # if given, where numpy array with test indices is saved
     save_plot: Path  # if given, where training history plot image is saved
     save_df: Path  # if given, where dataframe with model output is saved
@@ -34,6 +35,7 @@ class ArgParser(Tap):
     def configure(self) -> None:
         """Configure the argument parser."""
         self.add_argument("-i", "--input_path")
+        self.add_argument("-s", "--test_split", action="store_true", required=False)
         self.add_argument("-t", "--save_test_indices", required=False)
         self.add_argument("-p", "--save_plot", required=False)
         self.add_argument("-d", "--save_df", required=False)
@@ -50,8 +52,30 @@ def plot_history(history, plot_path: Path) -> None:
     plt.savefig(plot_path)
 
 
-def load_data(input_path: Path, 
-    save_test_indices: Path = None, test_size=0.33) -> tuple:
+def load_data(input_path: Path) -> tuple:
+    """
+    Load the style data.
+    Return data as X and labels as y.
+    """
+    x = []  # character images
+    y = []  # character labels
+
+    print(f"Loading jpeg images from {input_path}")
+    for file_path in input_path.glob("**/*.jpg"):
+        img = cv.imread(str(file_path.resolve()), cv.IMREAD_COLOR)
+        img = cv.resize(img, CV_IMG_SIZE)
+        x.append((img, file_path.parent.name))
+        y.append(HebrewStyles.style_li.index(file_path.parents[1].name))
+
+    y = np.array(y)
+    x = np.array([x[0] for x in x])
+
+    return x, y
+
+
+def load_data_split(
+    input_path: Path, save_test_indices: Path = None, test_size=0.33
+) -> tuple:
     """
     Load the style data.
     Split into train and test.
@@ -70,7 +94,7 @@ def load_data(input_path: Path,
     y = np.array(y)
     x_img = np.array([x[0] for x in x])
     x_char = np.array([x[1] for x in x])
-    
+
     # data split
     strat_split = StratifiedShuffleSplit(n_splits=1, test_size=test_size)
     for train_index, test_index in strat_split.split(x, y):
@@ -80,8 +104,9 @@ def load_data(input_path: Path,
         test_idx = test_index
         if save_test_indices is not None:
             np.save(save_test_indices, np.array(test_idx))
-    
+
     return x_train_img, y_train, x_test_img, x_test_char, y_test
+
 
 def initialize_model() -> StyleClassifierModel:
     """Initialize the style classifier."""
@@ -94,11 +119,18 @@ def initialize_model() -> StyleClassifierModel:
     )
     return style_model
 
-def model_analysis(history, style_model: StyleClassifierModel,
-    x_test_img, x_test_char, y_test,
-    save_plot: bool, save_df: bool) -> None:
+
+def model_analysis(
+    history,
+    style_model: StyleClassifierModel,
+    x_test_img,
+    x_test_char,
+    y_test,
+    save_plot: bool,
+    save_df: bool,
+) -> None:
     """Analyse the model and save analyses to file."""
-    
+
     if save_plot is not None:
         print(f"Saving history plot to {save_plot}")
         plot_history(history, save_plot)
@@ -121,14 +153,14 @@ def model_analysis(history, style_model: StyleClassifierModel,
         df = pd.DataFrame(data={"char": x_test_char, "true": y_test, "pred": y_pred})
         df.to_pickle(save_df)
 
-def train_style_classifier() -> None:
+
+def train_style_classifier_split(args) -> None:
     """Train the style classifier."""
-    ap = ArgParser()
-    args = ap.parse_args()
 
     # load data
-    (x_train_img, y_train, 
-    x_test_img, x_test_char, y_test) = load_data(args.input_path)
+    (x_train_img, y_train, x_test_img, x_test_char, y_test) = load_data_split(
+        args.input_path
+    )
 
     # initialize model
     style_model = initialize_model()
@@ -149,19 +181,61 @@ def train_style_classifier() -> None:
     )
 
     # Train the model
-    print("Training and validating on characters.")
+    print(f"Training and validating on {len(x_train_img)} characters.")
     history = style_model.model.fit(
         x_train_img,
         y_train,
         validation_data=(x_test_img, y_test),
-        epochs=25,
+        epochs=15,
         class_weight=class_weights,
         callbacks=[es],
     )
 
     # analyse and save run
-    model_analysis(history, style_model, x_test_img, x_test_char,
-    y_test, args.save_plot, args.save_df)
+    model_analysis(
+        history,
+        style_model,
+        x_test_img,
+        x_test_char,
+        y_test,
+        args.save_plot,
+        args.save_df,
+    )
+
+    style_model.save_model("style-classifier")
+
+
+def train_style_classifier(args) -> None:
+    """Train the style classifier."""
+
+    # load data
+    (x, y) = load_data(args.input_path)
+
+    # initialize model
+    style_model = initialize_model()
+
+    class_weights = dict(
+        enumerate(
+            class_weight.compute_class_weight("balanced", classes=np.unique(y), y=y)
+        )
+    )
+
+    # Train the model
+    print(f"Training on {len(x)} characters.")
+    style_model.model.fit(
+        x,
+        y,
+        epochs=15,
+        class_weight=class_weights,
+    )
+    style_model.save_model("style-classifier")
+
 
 if __name__ == "__main__":
-    train_style_classifier()
+    ap = ArgParser()
+    args = ap.parse_args()
+
+    if args.test_split:
+        train_style_classifier_split(args)
+    else:
+        train_style_classifier(args)
