@@ -190,6 +190,41 @@ class TrainTest:
         print(self.recognizer.get_summary())
         self.recognizer.model.evaluate(self.X_test, self.y_test)
 
+    def save_full_model(self) -> None:
+        """Train on train and dev data and save the model, validate using test data"""
+        X_concat = np.concatenate((self.X_train, self.X_dev), axis = 0)
+        y_concat = np.concatenate((self.y_train, self.y_dev), axis = 0)
+        self.recognizer.set_model((self.img_size[1], self.img_size[0]), 0.3)
+        self.recognizer.model.compile(
+            optimizer=keras.optimizers.Adam(),
+            loss=keras.losses.SparseCategoricalCrossentropy(),
+            metrics=["accuracy"],
+        )
+
+        font_chars = list((self.read_path / "train" / "Alef").iterdir())
+        if len(font_chars) == 27:
+            # print(self.recognizer.get_summary())
+            print("Pretraining on font data.")
+            self.recognizer.model.fit(self.X_pretrain, self.y_pretrain)  # pretraining
+
+        es = keras.callbacks.EarlyStopping(
+            monitor="val-accuracy",
+            patience=3,
+            restore_best_weights=True,
+            min_delta=0.007,
+        )
+        print("Training on characters.")
+        self.recognizer.model.fit(
+            X_concat,
+            y_concat,
+            validation_data=(self.X_test, self.y_test),
+            epochs=8,
+            callbacks=[es],
+        )
+        
+        print(self.recognizer.get_summary())
+        model_name = self.recognizer.get_model_name()
+        self.recognizer.save_model(model_name)
 
 if __name__ == "__main__":
     trainer = TrainTest()
