@@ -276,16 +276,21 @@ class DatasetBuilder:
             return True
         return False
 
+    def build_data_set(self):
+        """Build the entire data set."""
+        if not self.assert_data_correct():
+            self.download_all_data()
+            self.unpack_rename_data()
+            self.split_data_characters()
+            self.split_data_fragments()
+            self.create_font_data()
+        if not self.assert_train_augmented():
+            self.augment_train_data()
+        if not self.assert_style_data_correct():
+            self.download_style_data()
+            self.unpack_rename_data()
+
 
 if __name__ == "__main__":
     data_build = DatasetBuilder()
-    if not data_build.assert_data_correct():
-        data_build.download_all_data()
-        data_build.unpack_rename_data()
-        data_build.split_data_characters()
-        data_build.split_data_fragments()
-        data_build.create_font_data()
-    if not data_build.assert_train_augmented():
-        data_build.augment_train_data()
-    if not data_build.assert_style_data_correct():
-        data_build.download_style_data()
+    data_build.build_data_set()

@@ -4,6 +4,7 @@ import sys
 
 sys.path.append(str(Path(__file__).parents[1].resolve()))
 
+from src.data_handler.dataset_builder import DatasetBuilder
 from src.recognizer.train_test import TrainTest
 from src.style_classifier.model import StyleClassifierModel
 from src.style_classifier.style_train import train_style_classifier
@@ -16,7 +17,13 @@ parser.add_argument('--test', action='store_true',
 args = parser.parse_args()
 
 def pipeline_train():
-    # TODO: flags to train on all data
+    """
+    Download and preprocess all data.
+    Train the character recognizer on all available data.
+    Train the style classifier on all available data.
+    """
+    data_builder = DatasetBuilder()
+    data_builder.build_data_set()
     char_rcg = TrainTest()
     char_rcg.train_model()
     style_clf = StyleClassifierModel()
