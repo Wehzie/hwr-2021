@@ -22,7 +22,6 @@ from src.style_classifier.model import StyleClassifierModel
 IMG_SIZE = (60, 40)  # TODO: think about correct resizing method
 CV_IMG_SIZE = (IMG_SIZE[1], IMG_SIZE[0])
 
-
 class ArgParser(Tap):
     """Argument parser for the style classifier trainer."""
 
@@ -234,11 +233,14 @@ def train_test_style_classifier(args) -> None:
     style_model.save_model(model_name)
 
 
-def train_style_classifier(args) -> None:
+def train_style_classifier(input_path: Path = None) -> None:
     """Train the style classifier on all available data."""
 
+    if input_path == None:
+        input_path = Path(os.environ["DATA_PATH"]) / "character_styles"
+
     # load data
-    (x, y) = load_data(args.input_path)
+    (x, y) = load_data(input_path)
 
     # initialize model
     style_model = initialize_model()
@@ -266,9 +268,10 @@ def train_style_classifier(args) -> None:
 if __name__ == "__main__":
     ap = ArgParser()
     args = ap.parse_args()
+        
+    input_path = args.input_path
 
-    print(args)
     if args.test_split:
         train_test_style_classifier(args)
     else:
-        train_style_classifier(args)
+        train_style_classifier(input_path)
