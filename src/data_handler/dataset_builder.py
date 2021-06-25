@@ -265,8 +265,8 @@ class DatasetBuilder:
                 if new_len < 160:
                     reps = 4 - new_len // 50
                     self.augmenter.elastic_morphs(letter_dir, reps)
-            except Exception as e:
-                print(e)
+            except:
+                continue
     
     def assert_style_data_correct(self) -> bool:
         """Assert that the style data exists."""

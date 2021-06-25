@@ -50,14 +50,7 @@ class TrainTest:
         """
         self.read_path = Path(os.environ["DATA_PATH"]) / "characters"
         self.pretrain_path = Path(os.environ["FONT_DATA"]) / "training"
-        if not self.dataset_builder.assert_data_correct():
-            self.dataset_builder.download_all_data()
-            self.dataset_builder.unpack_rename_data()
-            self.dataset_builder.split_data_characters()
-            self.dataset_builder.split_data_fragments()
-            self.dataset_builder.create_font_data()
-        if not self.dataset_builder.assert_train_augmented():
-            self.dataset_builder.augment_train_data()
+        self.dataset_builder.build_data_set()
         X_pretrain, y_pretrain, X_train, y_train, X_dev, y_dev, X_test, y_test = tuple(
             [] for l in range(8)
         )
@@ -126,14 +119,14 @@ class TrainTest:
             monitor="val_accuracy",
             patience=3,
             restore_best_weights=True,
-            min_delta=0.007,
+            min_delta=0.008,
         )
         print("Training and validating on characters.")
         self.recognizer.model.fit(
             self.X_train,
             self.y_train,
             validation_data=(self.X_dev, self.y_dev),
-            epochs=10,
+            epochs=15,
             callbacks=[es],
         )
 
@@ -146,10 +139,10 @@ class TrainTest:
     def model_analysis(self, model_name: str) -> None:
         """Analyse how well a model performed."""
         # probabilites
-        y_pred_prob = self.recognizer.predict(self.X_dev)
+        y_pred_prob = self.recognizer.predict(self.X_test)
         # most likely class
         y_pred = np.argmax(y_pred_prob, axis=1)
-        # compare true and predicted classes on dev set
+        # compare true and predicted classes on test set
 
         # path handling for writing to file
         output_dir = Path(os.environ["MODEL_DATA"]) / model_name
@@ -157,8 +150,8 @@ class TrainTest:
         out_path = output_dir / out_name
 
         # create, print and write to file a sklearn classification report
-        print(set(self.y_dev) - set(y_pred))
-        report = classification_report(self.y_dev, y_pred)
+        print(set(self.y_test) - set(y_pred))
+        report = classification_report(self.y_test, y_pred)
         print(report)
         with open(out_path, "w") as f:
             f.write(report)
@@ -173,7 +166,7 @@ class TrainTest:
         return: None. Saves figure
         """
         df = pd.crosstab(
-            pd.Series(self.y_dev),
+            pd.Series(self.y_test),
             pd.Series(y_pred),
             rownames=["True:"],
             colnames=["Predicted:"],
@@ -185,15 +178,10 @@ class TrainTest:
         out_path = output_dir / out_name
         plt.savefig(out_path)
 
-    def test_model(self) -> None:
-        """Test a trained model on the training set (X_train, y_train)."""
-        print(self.recognizer.get_summary())
-        self.recognizer.model.evaluate(self.X_test, self.y_test)
-
     def save_full_model(self) -> None:
-        """Train on train and dev data and save the model, validate using test data"""
-        X_concat = np.concatenate((self.X_train, self.X_dev), axis=0)
-        y_concat = np.concatenate((self.y_train, self.y_dev), axis=0)
+        """Train on all data and save the model, validate using test data"""
+        X_concat = np.concatenate((self.X_train, self.X_dev, self.X_test), axis=0)
+        y_concat = np.concatenate((self.y_train, self.y_dev, self.y_test), axis=0)
         self.recognizer.set_model((self.img_size[1], self.img_size[0]), 0.3)
         self.recognizer.model.compile(
             optimizer=keras.optimizers.Adam(),
@@ -207,19 +195,11 @@ class TrainTest:
             print("Pretraining on font data.")
             self.recognizer.model.fit(self.X_pretrain, self.y_pretrain)  # pretraining
 
-        es = keras.callbacks.EarlyStopping(
-            monitor="val-accuracy",
-            patience=3,
-            restore_best_weights=True,
-            min_delta=0.007,
-        )
         print("Training on characters.")
         self.recognizer.model.fit(
             X_concat,
             y_concat,
-            validation_data=(self.X_test, self.y_test),
-            epochs=8,
-            callbacks=[es],
+            epochs=10,
         )
 
         print(self.recognizer.get_summary())

@@ -47,9 +47,12 @@ class Augmenter:
             print(img_path)
             img = cv.imread(str(img_path))
             h, w, _ = img.shape  # image height and width
-            for rep in range(reps):
-                res = elastic_morphing(img, amp, sigma, h, w)  # morph image
-                cv.imwrite(f"{img_path}{rep}.jpg", res)  # write result to disk
+            try:
+                for rep in range(reps):
+                    res = elastic_morphing(img, amp, sigma, h, w)  # morph image
+                    cv.imwrite(f"{img_path}{rep}.jpg", res)  # write result to disk
+            except:
+                raise
 
 
 if __name__ == "__main__":
