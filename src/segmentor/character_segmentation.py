@@ -94,7 +94,7 @@ def split_connected(
         pixels = np.where(char == 0)
         height = pixels[0].max() - pixels[0].min()
         width = char.shape[1]
-        if width > 1.2 * height and width > 2 * min_width:
+        if line_height / width < 0.6 and width > 2 * min_width:
             split_chars.extend(middle_split(char))
         else:
             split_chars.append(char)
@@ -164,6 +164,8 @@ def estimate_line_height(
     img: np.ndarray,
 ):
     img = img.copy()
+    img = cv.threshold(img, 127, 255, cv.THRESH_BINARY)[1]
+    img = cv.bitwise_not(img)
 
     # Estimate connected components
     (num_labels, labels, stats, centroids) = cv.connectedComponentsWithStats(
@@ -180,8 +182,7 @@ def estimate_line_height(
 
         if width > MIN_WIDTH:  # and ratio < MAX_RATIO:
             heights.append(height)
-
-    return int(np.mean(heights)) if len(heights) > 0 else 0
+    return int(np.median(heights)) if len(heights) > 0 else 0
 
 
 def extract_chars_from_fragment(in_frag_path, output_dir, w_par):
