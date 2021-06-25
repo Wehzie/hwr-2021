@@ -28,6 +28,7 @@ class ArgParser(Tap):
 
     input_path: Path = Path("data/character_styles")  # input data folder
     test_split: bool = False
+    save_all: bool = False  # save all below to model directory
     save_test_indices: Path  # if given, where numpy array with test indices is saved
     save_plot: Path  # if given, where training history plot image is saved
     save_df: Path  # if given, where dataframe with model output is saved
@@ -36,6 +37,7 @@ class ArgParser(Tap):
         """Configure the argument parser."""
         self.add_argument("-i", "--input_path")
         self.add_argument("-s", "--test_split", action="store_true", required=False)
+        self.add_argument("-a", "--save_all", action="store_true", required=False)
         self.add_argument("-t", "--save_test_indices", required=False)
         self.add_argument("-p", "--save_plot", required=False)
         self.add_argument("-d", "--save_df", required=False)
@@ -74,7 +76,11 @@ def load_data(input_path: Path) -> tuple:
 
 
 def load_data_split(
-    input_path: Path, save_test_indices: Path = None, test_size=0.33
+    input_path: Path,
+    save_all: bool,
+    model_name: str,
+    save_test_indices: Path = None,
+    test_size: float = 0.33,
 ) -> tuple:
     """
     Load the style data.
@@ -102,6 +108,11 @@ def load_data_split(
         x_test_char = x_char[test_index]
         y_train, y_test = y[train_index], y[test_index]
         test_idx = test_index
+        if save_all:
+            save_test_indices = (
+                Path(os.environ["STYLE_MODEL_DATA"]) / model_name / "indices"
+            )
+            save_test_indices.mkdir(parents=True, exist_ok=True)
         if save_test_indices is not None:
             np.save(save_test_indices, np.array(test_idx))
 
@@ -126,10 +137,15 @@ def model_analysis(
     x_test_img,
     x_test_char,
     y_test,
+    save_all: bool,
     save_plot: bool,
     save_df: bool,
+    model_name: str,
 ) -> None:
     """Analyse the model and save analyses to file."""
+    if save_all:
+        save_plot = Path(os.environ["STYLE_MODEL_DATA"]) / model_name / "history.png"
+        save_df = Path(os.environ["STYLE_MODEL_DATA"]) / model_name / "dataframe"
 
     if save_plot is not None:
         print(f"Saving history plot to {save_plot}")
@@ -154,17 +170,23 @@ def model_analysis(
         df.to_pickle(save_df)
 
 
-def train_style_classifier_split(args) -> None:
-    """Train the style classifier."""
-
-    # load data
-    (x_train_img, y_train, x_test_img, x_test_char, y_test) = load_data_split(
-        args.input_path
-    )
+def train_test_style_classifier(args) -> None:
+    """
+    Train and test the style classifier.
+    Splits a data set into train and test.
+    Analyses the performance on the test set.
+    """
 
     # initialize model
     style_model = initialize_model()
+    model_name = style_model.get_model_name()
 
+    # load data
+    (x_train_img, y_train, x_test_img, x_test_char, y_test) = load_data_split(
+        args.input_path, args.save_all, model_name, args.save_test_indices
+    )
+
+    # set training parameters
     es = keras.callbacks.EarlyStopping(
         monitor="val_accuracy",
         patience=10,
@@ -172,6 +194,7 @@ def train_style_classifier_split(args) -> None:
         min_delta=0.007,
     )
 
+    # balance data set
     class_weights = dict(
         enumerate(
             class_weight.compute_class_weight(
@@ -198,22 +221,28 @@ def train_style_classifier_split(args) -> None:
         x_test_img,
         x_test_char,
         y_test,
+        args.save_all,
         args.save_plot,
         args.save_df,
+        model_name,
     )
 
-    style_model.save_model("style-classifier")
+    style_model.save_model(model_name)
 
 
-def train_style_classifier(args) -> None:
-    """Train the style classifier."""
+def train_style_classifier(input_path: Path = None) -> None:
+    """Train the style classifier on all available data."""
+
+    if input_path == None:
+        input_path = Path(os.environ["DATA_PATH"]) / "character_styles"
 
     # load data
-    (x, y) = load_data(args.input_path)
+    (x, y) = load_data(input_path)
 
     # initialize model
     style_model = initialize_model()
 
+    # balance data set
     class_weights = dict(
         enumerate(
             class_weight.compute_class_weight("balanced", classes=np.unique(y), y=y)
@@ -228,7 +257,9 @@ def train_style_classifier(args) -> None:
         epochs=15,
         class_weight=class_weights,
     )
-    style_model.save_model("style-classifier")
+
+    model_name = style_model.get_model_name()
+    style_model.save_model(model_name)
 
 
 if __name__ == "__main__":
@@ -237,6 +268,6 @@ if __name__ == "__main__":
     assert args.input_path.exists(), "Input directory does not exist"
 
     if args.test_split:
-        train_style_classifier_split(args)
+        train_test_style_classifier(args)
     else:
-        train_style_classifier(args)
+        train_style_classifier(args.input_path)

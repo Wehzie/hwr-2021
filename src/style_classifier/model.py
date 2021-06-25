@@ -110,13 +110,44 @@ class StyleClassifierModel:
         """Predict the character labels of given input images."""
         return self.model.predict(data)
 
-    def save_model(self, model_name: str) -> None:
-        """Save the model to the style model path under the given name."""
+    def get_model_name(self) -> str:
+        """
+        Create automatic incremental model names.
+        For example, if model_0 exists, then model_1 will be returned.
+        """
         if "STYLE_MODEL_DATA" not in os.environ:
             print("Cannot find STYLE_MODEL_DATA environment variable")
             exit(1)
 
-        self.model.save(Path(os.environ["STYLE_MODEL_DATA"]) / model_name)
+        path = Path(os.environ["STYLE_MODEL_DATA"])
+        # create data/model if it doesn't exist
+        path.mkdir(parents=True, exist_ok=True)
+        # names of currently existing models
+        names = [file.name for file in path.iterdir()]
+        
+        model_name = None
+        for i in range(1000):
+            if i == 999:
+                print("Clear your model folder for more automatic name generation.")
+            model_name = "model_" + str(i)
+            if model_name in names: # this name exists
+                continue
+            else: # a new name is found
+                break
+        return model_name
+
+    def save_model(self, model_name: str) -> None:
+        """Save the model to the style model path under the given name."""
+        # request a model name if none was provided
+        if "STYLE_MODEL_DATA" not in os.environ:
+            print("Cannot find STYLE_MODEL_DATA environment variable")
+            exit(1)
+        if model_name == None:
+            model_name = self.get_model_name()
+        out_path = Path(os.environ["STYLE_MODEL_DATA"]) / model_name
+        # create data/model if it doesn't exist
+        out_path.mkdir(parents=True, exist_ok=True) 
+        self.model.save(out_path)
 
     def load_model(self, model_name: str) -> None:
         """Load a saved model from the style model path under the given name."""
