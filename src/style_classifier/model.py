@@ -18,7 +18,7 @@ class StyleClassifierModel:
 
     def set_model(
         self,
-        image_size: tuple = (40, 60),
+        image_size: tuple,
         drop_rate: float = 0.3,
         arch: str = "dense_net_121",
     ) -> None:

@@ -86,7 +86,9 @@ def middle_split(char: np.ndarray) -> List[np.ndarray]:
     return [char[:, :middle], char[:, middle:]]
 
 
-def split_connected(chars: List[np.ndarray], min_width: int) -> List[np.ndarray]:
+def split_connected(
+    chars: List[np.ndarray], min_width: int, line_height: int
+) -> List[np.ndarray]:
     split_chars = []
     for char in chars:
         pixels = np.where(char == 0)
@@ -109,7 +111,10 @@ def get_conn_components(img: np.ndarray, max_height=250, min_area=10000):
     )
 
     imgs = []
-    for comp_id in range(1, num_labels):
+    comp_ids = np.argsort(stats[:, cv.CC_STAT_LEFT])
+    comp_ids = np.delete(comp_ids, np.where(comp_ids == 0))
+
+    for comp_id in comp_ids:
         component_mask = (labels == comp_id).astype("uint8") * 255
         x = stats[comp_id, cv.CC_STAT_LEFT]
         y = stats[comp_id, cv.CC_STAT_TOP]
@@ -124,7 +129,10 @@ def get_conn_components(img: np.ndarray, max_height=250, min_area=10000):
 
 
 def extract_characters_from_word(
-    img: np.ndarray, read_ord="r2l", method="cca"
+    img: np.ndarray,
+    line_height: int,
+    read_ord="r2l",
+    method="cca",
 ) -> List[np.ndarray]:
     """Load a word image and return extracted characters using vertical whitespace or CCA."""
 
@@ -138,17 +146,42 @@ def extract_characters_from_word(
         boxes = get_bounding_boxes(img)
         imgs = [box.image_slice(img) for box in boxes]
 
-    if read_ord == "r2l":  # words in order right to left
-        boxes = reversed(imgs)
-
     characters: List[np.ndarray] = []
     for i, char_img in enumerate(imgs):
         inversed = cv.bitwise_not(char_img)
         if char_img.shape[1] > MIN_WIDTH:
             characters.append(inversed)
 
-    characters = split_connected(characters, MIN_WIDTH)
+    characters = split_connected(characters, MIN_WIDTH, line_height)
+
+    if read_ord == "r2l":  # words in order right to left
+        characters = reversed(characters)
+
     return characters
+
+
+def estimate_line_height(
+    img: np.ndarray,
+):
+    img = img.copy()
+
+    # Estimate connected components
+    (num_labels, labels, stats, centroids) = cv.connectedComponentsWithStats(
+        img, 8, cv.CV_32S
+    )
+
+    heights = []
+    for h in range(1, num_labels):
+        height = stats[h, cv.CC_STAT_HEIGHT]
+        width = stats[h, cv.CC_STAT_WIDTH]
+        area = stats[h, cv.CC_STAT_WIDTH] * stats[h, cv.CC_STAT_HEIGHT]
+        pix_count = stats[h, cv.CC_STAT_AREA]
+        ratio = pix_count / area
+
+        if width > MIN_WIDTH:  # and ratio < MAX_RATIO:
+            heights.append(height)
+
+    return int(np.mean(heights)) if len(heights) > 0 else 0
 
 
 def extract_chars_from_fragment(in_frag_path, output_dir, w_par):
@@ -183,13 +216,14 @@ def extract_chars_from_fragment(in_frag_path, output_dir, w_par):
             cv.imwrite(str((line_path / f"line_L{i}.png").resolve()), line)
         # extract words from a line
         words = extract_words(line)
+        avg_line_height = estimate_line_height(line)
 
         for j, word in enumerate(words):  # Extract characters from words
             # write word images to output directory
             if w_par.word == True:
                 cv.imwrite(str((word_path / f"word_L{i}_W{j}.png").resolve()), word)
             # extract characters from a word
-            chars = extract_characters_from_word(word)
+            chars = extract_characters_from_word(word, line_height=avg_line_height)
 
             for z, char in enumerate(chars):
                 # write character images to output directory

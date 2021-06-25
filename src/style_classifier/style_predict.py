@@ -44,6 +44,7 @@ if __name__ == "__main__":
     style_model.load_model("style-classifier")
 
     preds_sum = np.sum(style_model.predict(imgs), axis=0)
+    print(preds_sum / len(imgs))
     style_pred = np.argmax(preds_sum)
     style_string = HebrewStyles.style_li[style_pred]
 

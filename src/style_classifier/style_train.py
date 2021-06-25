@@ -19,7 +19,7 @@ sys.path.append(str(Path(__file__).parents[2].resolve()))
 from src.data_handler.hebrew import HebrewStyles
 from src.style_classifier.model import StyleClassifierModel
 
-IMG_SIZE = (60, 40)  # TODO: think about correct resizing method
+IMG_SIZE = (70, 60)
 CV_IMG_SIZE = (IMG_SIZE[1], IMG_SIZE[0])
 
 
@@ -234,6 +234,7 @@ def train_style_classifier(args) -> None:
 if __name__ == "__main__":
     ap = ArgParser()
     args = ap.parse_args()
+    assert args.input_path.exists(), "Input directory does not exist"
 
     if args.test_split:
         train_style_classifier_split(args)
