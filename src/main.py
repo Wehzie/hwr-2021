@@ -24,7 +24,7 @@ def pipeline_train():
     data_builder = DatasetBuilder()
     data_builder.build_data_set()
     char_rcg = TrainTest()
-    char_rcg.train_model()
+    char_rcg.save_full_model()
     train_style_classifier()
 
 def pipeline_test():
