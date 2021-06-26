@@ -28,10 +28,10 @@ class ArgParser(Tap):
 class Transcriber:
     """Transcriber from extracted characters to a text file."""
 
-    def __init__(self) -> None:
+    def __init__(self, model_name: str = "model_0") -> None:
         """Initialize the transcriber."""
         self.recognizer = RecognizerModel()
-        self.recognizer.load_model("model_0")
+        self.recognizer.load_model(model_name)
 
     def load_images(self, input_dir: Path) -> Tuple[List[Path], List[np.ndarray]]:
         """Load images from the input directory."""

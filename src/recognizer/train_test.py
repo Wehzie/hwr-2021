@@ -19,9 +19,6 @@ from src.data_handler.dataset_builder import DatasetBuilder
 from src.data_handler.hebrew import HebrewAlphabet
 from src.recognizer.model import RecognizerModel
 
-# https://www.tensorflow.org/tutorials/images/cnn
-
-
 class TrainTest:
     """Train the Hebrew character recognizer."""
 
@@ -100,9 +97,9 @@ class TrainTest:
             np.array(y_test),
         )
 
-    def train_model(self) -> None:
+    def train_model(self, model_arch="dense_net_121") -> None:
         """Train on X_train, y_train and validate on X_dev, y_dev."""
-        self.recognizer.set_model((self.img_size[1], self.img_size[0]), 0.3)
+        self.recognizer.set_model((self.img_size[1], self.img_size[0]), 0.3, model_arch)
         self.recognizer.model.compile(
             optimizer=keras.optimizers.Adam(),
             loss=keras.losses.SparseCategoricalCrossentropy(),
@@ -178,11 +175,11 @@ class TrainTest:
         out_path = output_dir / out_name
         plt.savefig(out_path)
 
-    def save_full_model(self) -> None:
+    def train_full_model(self, model_arch="dense_net_121") -> None:
         """Train on all data and save the model, validate using test data"""
         X_concat = np.concatenate((self.X_train, self.X_dev, self.X_test), axis=0)
         y_concat = np.concatenate((self.y_train, self.y_dev, self.y_test), axis=0)
-        self.recognizer.set_model((self.img_size[1], self.img_size[0]), 0.3)
+        self.recognizer.set_model((self.img_size[1], self.img_size[0]), 0.3, model_arch)
         self.recognizer.model.compile(
             optimizer=keras.optimizers.Adam(),
             loss=keras.losses.SparseCategoricalCrossentropy(),

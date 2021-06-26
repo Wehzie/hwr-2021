@@ -6,7 +6,8 @@ sys.path.append(str(Path(__file__).parents[1].resolve()))
 
 from src.data_handler.dataset_builder import DatasetBuilder
 from src.recognizer.train_test import TrainTest
-from src.style_classifier.style_train import ArgParser, train_style_classifier
+from src.recognizer.transcriber import Transcriber
+from src.style_classifier.style_train import train_style_classifier
 
 parser = argparse.ArgumentParser(description='Control the pipeline.')
 parser.add_argument('--train', action='store_true',
@@ -24,14 +25,17 @@ def pipeline_train():
     data_builder = DatasetBuilder()
     data_builder.build_data_set()
     char_rcg = TrainTest()
-    char_rcg.save_full_model()
+    char_rcg.train_full_model()
     train_style_classifier()
 
 def pipeline_test():
-    pass
+    transcriber = Transcriber()
 
 if __name__ == "__main__":
     if args.train:
         pipeline_train()
-    if args.test:
+    elif args.test:
+        pipeline_test()
+    else:
+        pipeline_train()
         pipeline_test()
