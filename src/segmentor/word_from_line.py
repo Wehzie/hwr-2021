@@ -50,8 +50,7 @@ def preprocess_img(img: np.ndarray, filter_len: int) -> np.ndarray:
 def get_bounding_boxes(
     img: np.ndarray,
     min_pixel=100,
-    filter_len=10,
-    min_width=16,
+    filter_len=15,
 ) -> List[BoundingBox]:
     """Get bounding boxes of the words in a line.
 
@@ -77,7 +76,7 @@ def get_bounding_boxes(
             box.w = i - box.x - filter_len
             boxed_img = box.image_slice(img)
             # minimum number of non-white pixels
-            if np.count_nonzero(boxed_img) > min_pixel and box.w > min_width:
+            if np.count_nonzero(boxed_img) > min_pixel:
                 boxes.append(box)  # add box to list
             box = BoundingBox(None, 0, None, height)  # reset box
     return boxes

@@ -31,7 +31,7 @@ class Transcriber:
     def __init__(self) -> None:
         """Initialize the transcriber."""
         self.recognizer = RecognizerModel()
-        self.recognizer.load_model("model1")
+        self.recognizer.load_model("model_0")
 
     def load_images(self, input_dir: Path) -> Tuple[List[Path], List[np.ndarray]]:
         """Load images from the input directory."""

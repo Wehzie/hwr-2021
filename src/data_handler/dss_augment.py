@@ -44,7 +44,6 @@ class Augmenter:
         amp = 2.5  # the amplitude of the deformation
         sigma = 10  # the local image area affected (spread of the gaussian smoothing kernel)
         for img_path in img_paths:
-            print(img_path)
             img = cv.imread(str(img_path))
             h, w, _ = img.shape  # image height and width
             try:

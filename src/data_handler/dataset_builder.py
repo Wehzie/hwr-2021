@@ -91,7 +91,7 @@ class DatasetBuilder:
         self.download_data(os.environ["NC_TOKEN_TRAIN_FRAGMENTS"], "nextcloud")
         self.download_data(os.environ["HABBAKUK_URL"], "generic_url")
         print("Download complete!")
-    
+
     def download_style_data(self) -> None:
         """Download the style character and fragment data."""
         print("Download in progress.")
@@ -157,7 +157,9 @@ class DatasetBuilder:
         read_path = Path(os.environ["DATA_PATH"]) / "characters"
         if not read_path.exists():
             return False
-        if set([x.name for x in read_path.iterdir()]) != {"train", "dev", "test"}:
+        if not {"train", "dev", "test"}.issubset(
+            set([x.name for x in read_path.iterdir()])
+        ):
             return False
         for subset in read_path.iterdir():
             if len(list(subset.iterdir())) != self.directory_size_characters:
@@ -228,12 +230,10 @@ class DatasetBuilder:
         read_path = Path(os.environ["DATA_PATH"]) / "fragments"
         if not read_path.exists():
             return False
-        if set([x.name for x in read_path.iterdir()]) != {"train", "dev", "test"}:
+        if not {"train", "dev", "test"}.issubset(
+            set([x.name for x in read_path.iterdir()])
+        ):
             return False
-        for subset in read_path.iterdir():
-            # a file with "binarized" in the name should be in each subset
-            if "binarized" not in list(subset.iterdir())[0].name:
-                return False
         return True
 
     def create_font_data(self):
@@ -267,7 +267,7 @@ class DatasetBuilder:
                     self.augmenter.elastic_morphs(letter_dir, reps)
             except:
                 continue
-    
+
     def assert_style_data_correct(self) -> bool:
         """Assert that the style data exists."""
         style_chars = Path(os.environ["DATA_PATH"]) / "character_style"

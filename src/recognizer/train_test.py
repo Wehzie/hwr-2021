@@ -199,7 +199,7 @@ class TrainTest:
         self.recognizer.model.fit(
             X_concat,
             y_concat,
-            epochs=10,
+            epochs=6,
         )
 
         print(self.recognizer.get_summary())
