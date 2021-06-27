@@ -20,7 +20,7 @@ class StyleClassifierModel:
         self,
         image_size: tuple,
         drop_rate: float = 0.3,
-        arch: str = "dense_net_121",
+        model_arch: str = "dense_net_121",
     ) -> None:
         """Create the sequential CNN for character recognition."""
 
@@ -81,7 +81,7 @@ class StyleClassifierModel:
         image_input = layers.Input(shape=image_size + (3,))
 
         # selecting CNN architecture
-        if arch == "custom":
+        if model_arch == "custom":
             model = cnn_custom()(image_input)
         else:
             model = cnn_dense_net_121()(image_input)
@@ -124,15 +124,15 @@ class StyleClassifierModel:
         path.mkdir(parents=True, exist_ok=True)
         # names of currently existing models
         names = [file.name for file in path.iterdir()]
-        
+
         model_name = None
         for i in range(1000):
             if i == 999:
                 print("Clear your model folder for more automatic name generation.")
             model_name = "model_" + str(i)
-            if model_name in names: # this name exists
+            if model_name in names:  # this name exists
                 continue
-            else: # a new name is found
+            else:  # a new name is found
                 break
         return model_name
 
@@ -146,7 +146,7 @@ class StyleClassifierModel:
             model_name = self.get_model_name()
         out_path = Path(os.environ["STYLE_MODEL_DATA"]) / model_name
         # create data/model if it doesn't exist
-        out_path.mkdir(parents=True, exist_ok=True) 
+        out_path.mkdir(parents=True, exist_ok=True)
         self.model.save(out_path)
 
     def load_model(self, model_name: str) -> None:

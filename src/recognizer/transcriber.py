@@ -95,7 +95,17 @@ class Transcriber:
         return input_dir.glob("**/characters")
 
     def transcribe_fragments(self, input_dir: Path, output_dir: Path) -> None:
-        """ """
+        """
+        Transcribe one or multiple fragment's characters.
+
+        input_dir: Path to a directory where extracted characters from
+            multiple fragments are matched and transcribed.
+            For example data/multiple_fragments
+            May contain frag1/chars and frag2/chars
+            Both of which will be transcribed
+        output_dir: Path to a directory to save the transcribed file.
+        returns: None. Saves to file.
+        """
         output_dir.mkdir(parents=True, exist_ok=True)
         char_dirs: list = self.match_character_folders(input_dir)
         for char_dir in char_dirs:

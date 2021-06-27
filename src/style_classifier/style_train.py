@@ -119,10 +119,10 @@ def load_data_split(
     return x_train_img, y_train, x_test_img, x_test_char, y_test
 
 
-def initialize_model() -> StyleClassifierModel:
+def initialize_model(model_arch: str = "dense_net_121") -> StyleClassifierModel:
     """Initialize the style classifier."""
     style_model = StyleClassifierModel()
-    style_model.set_model(IMG_SIZE, 0.2)
+    style_model.set_model(IMG_SIZE, 0.2, model_arch)
     style_model.model.compile(
         optimizer=keras.optimizers.Adam(),
         loss=keras.losses.SparseCategoricalCrossentropy(),
@@ -170,7 +170,7 @@ def model_analysis(
         df.to_pickle(save_df)
 
 
-def train_test_style_classifier(args) -> None:
+def train_test_style_classifier(args, model_arch: str = "dense_net_121") -> None:
     """
     Train and test the style classifier.
     Splits a data set into train and test.
@@ -178,7 +178,7 @@ def train_test_style_classifier(args) -> None:
     """
 
     # initialize model
-    style_model = initialize_model()
+    style_model = initialize_model(model_arch)
     model_name = style_model.get_model_name()
 
     # load data
@@ -230,7 +230,9 @@ def train_test_style_classifier(args) -> None:
     style_model.save_model(model_name)
 
 
-def train_style_classifier(input_path: Path = None) -> None:
+def train_style_classifier(
+    input_path: Path = None, model_arch: str = "dense_net_121"
+) -> None:
     """Train the style classifier on all available data."""
 
     if input_path == None:
@@ -240,7 +242,7 @@ def train_style_classifier(input_path: Path = None) -> None:
     (x, y) = load_data(input_path)
 
     # initialize model
-    style_model = initialize_model()
+    style_model = initialize_model(model_arch)
 
     # balance data set
     class_weights = dict(

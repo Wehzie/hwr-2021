@@ -5,7 +5,6 @@ import sys
 import shutil
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
-
 sys.path.append(str(Path(__file__).parents[1].resolve()))
 
 from src.data_handler.dataset_builder import DatasetBuilder
@@ -13,6 +12,7 @@ from src.recognizer.train_test import TrainTest
 from src.recognizer.transcriber import Transcriber
 from src.segmentor.character_segmentation import WriteParams, segment_characters
 from src.style_classifier.style_train import train_style_classifier
+from src.style_classifier.style_predict import date_fragments
 
 parser = argparse.ArgumentParser(description="Control the pipeline.")
 parser.add_argument(
@@ -26,6 +26,12 @@ parser.add_argument(
     type=Path,
     help="provide first an input and second an output directory. \
         Test character recognizer and style classifier",
+)
+parser.add_argument(
+    "--train-fast",
+    action="store_true",
+    help="train faster by using a simpler architecture. \
+        Results in less recognition and classification accuracy.",
 )
 args = parser.parse_args()
 
@@ -49,7 +55,7 @@ def get_work_dir() -> Path:
     return work_dir
 
 
-def pipeline_train() -> None:
+def pipeline_train(train_fast) -> None:
     """
     Download and preprocess all data.
     Train the character recognizer on all available data.
@@ -58,13 +64,15 @@ def pipeline_train() -> None:
     data_builder = DatasetBuilder()
     data_builder.build_data_set()
     char_rcg = TrainTest()
-    char_rcg.train_full_model()
-    train_style_classifier()
+    model_arch = "custom" if train_fast else "dense_net_121"
+    char_rcg.train_full_model(model_arch=model_arch)
+    train_style_classifier(model_arch=model_arch)
 
 
 def pipeline_test(input_dir: Path, output_dir: Path) -> None:
     """
     Transcribe fragments and date them by style of an epoch.
+
     input_dir: Read one or more fragments from this directory.
     output_dir: Write one or more transcribed fragments to this directory.
     """
@@ -72,14 +80,15 @@ def pipeline_test(input_dir: Path, output_dir: Path) -> None:
     segment_characters(input_dir, work_dir, WriteParams())
     transcriber = Transcriber()
     transcriber.transcribe_fragments(input_dir=work_dir, output_dir=output_dir)
-    # TODO: style classifier
+    date_fragments(input_dir=work_dir, output_dir=output_dir)
+
 
 if __name__ == "__main__":
     if args.train and args.test:
-        pipeline_train()
+        pipeline_train(args.train_fast)
         pipeline_test(input_dir=args.test[0], output_dir=args.test[1])
     elif args.train:
-        pipeline_train()
+        pipeline_train(args.train_fast)
     elif args.test:
         pipeline_test(input_dir=args.test[0], output_dir=args.test[1])
     else:
