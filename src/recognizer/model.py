@@ -135,15 +135,15 @@ class RecognizerModel:
         path.mkdir(parents=True, exist_ok=True)
         # names of currently existing models
         names = [file.name for file in path.iterdir()]
-        
+
         model_name = None
         for i in range(1000):
             if i == 999:
                 print("Clear your model folder for more automatic name generation.")
             model_name = "model_" + str(i)
-            if model_name in names: # this name exists
+            if model_name in names:  # this name exists
                 continue
-            else: # a new name is found
+            else:  # a new name is found
                 break
         return model_name
 
@@ -156,7 +156,7 @@ class RecognizerModel:
             model_name = self.get_model_name()
         out_path = Path(os.environ["MODEL_DATA"]) / model_name
         # create data/model if it doesn't exist
-        out_path.mkdir(parents=True, exist_ok=True) 
+        out_path.mkdir(parents=True, exist_ok=True)
         self.model.save(out_path)
 
     def load_model(self, model_name: str) -> None:

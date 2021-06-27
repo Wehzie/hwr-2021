@@ -190,16 +190,13 @@ class DatasetBuilder:
         truth_agree = corr_char and corr_font and corr_frag
         return True if truth_agree else False
 
-    def split_data_fragments(self) -> None:
+    def clean_data_fragments(self) -> None:
         """Split DSS fragments into train, dev (validation) and test sets."""
         read_path: Path = Path(os.environ["DATA_PATH"]) / "fragments"
         try:
             shutil.rmtree(read_path / "__MACOSX")
         except FileNotFoundError:
             print('Folder "__MACOSX" already removed.')
-
-        for subset in self.data_split:  # make train, dev, test
-            (read_path / subset).mkdir()
 
         # delete non-binarized images
         frag_paths: list = list((read_path / "image-data").iterdir())
@@ -208,20 +205,8 @@ class DatasetBuilder:
         for frag in frags_delete:
             frag.unlink()
         frag_paths = frags_binarized
-
-        split_train: int = int(len(frag_paths) * self.data_split["train"])
-        split_dev: int = split_train + int(len(frag_paths) * self.data_split["dev"])
-
-        split_indices: list = [
-            frag_paths[:split_train],
-            frag_paths[split_train:split_dev],
-            frag_paths[split_dev:],
-        ]
-        for idx, frag_paths in enumerate(split_indices):
-            for frag in frag_paths:
-                shutil.move(
-                    frag, read_path / list(self.data_split.keys())[idx] / frag.name
-                )
+        for frag_path in frag_paths:
+            shutil.move(frag_path, read_path)
 
         (read_path / "image-data").rmdir()  # delete empty folder
 
@@ -230,9 +215,8 @@ class DatasetBuilder:
         read_path = Path(os.environ["DATA_PATH"]) / "fragments"
         if not read_path.exists():
             return False
-        if not {"train", "dev", "test"}.issubset(
-            set([x.name for x in read_path.iterdir()])
-        ):
+        bin_images = [img for img in read_path.iterdir() if "binarized" in img.name]
+        if len(bin_images) == 0:
             return False
         return True
 
@@ -249,6 +233,7 @@ class DatasetBuilder:
     def augment_train_data(self):
         """Augment and balance the train data"""
         print("Augmenting train data.")
+        elastic_flag = 1
         read_path: Path = Path(os.environ["DATA_PATH"]) / "characters" / "train"
         for letter_dir in read_path.iterdir():
             original_images = list(letter_dir.iterdir())
@@ -260,17 +245,22 @@ class DatasetBuilder:
                     img_path = str(j)
                     self.augmenter.dilate_image(img_path, 3, max_kernel)
                     self.augmenter.erosion_image(img_path, 3, max_kernel)
-            new_len = len(list(letter_dir.iterdir()))
-            try:  # to make the program runnable if you are not on linux
-                if new_len < 160:
-                    reps = 4 - new_len // 50
-                    self.augmenter.elastic_morphs(letter_dir, reps)
-            except:
-                continue
+            new_len = len(
+                list(letter_dir.iterdir())
+            )  # Length after regular augmentation
+            if elastic_flag == 1:
+                try:  # to make the program runnable if you are not on linux
+                    if new_len < 160:
+                        reps = 4 - new_len // 50
+                        self.augmenter.elastic_morphs(letter_dir, reps)
+                except:
+                    print("Continuing without elastic morph")
+                    elastic_flag = 0
+                    continue
 
     def assert_style_data_correct(self) -> bool:
         """Assert that the style data exists."""
-        style_chars = Path(os.environ["DATA_PATH"]) / "character_style"
+        style_chars = Path(os.environ["DATA_PATH"]) / "character_styles"
         style_frags = Path(os.environ["DATA_PATH"]) / "fragment_styles"
         if style_chars.exists() and style_frags.exists():
             return True
@@ -282,7 +272,7 @@ class DatasetBuilder:
             self.download_all_data()
             self.unpack_rename_data()
             self.split_data_characters()
-            self.split_data_fragments()
+            self.clean_data_fragments()
             self.create_font_data()
         if not self.assert_train_augmented():
             self.augment_train_data()

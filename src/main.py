@@ -34,6 +34,7 @@ parser.add_argument(
         Results in less recognition and classification accuracy.",
 )
 
+
 def get_work_dir() -> Path:
     """Create a cleared working directory for the pipeline's intermediate storage."""
     # make directory
