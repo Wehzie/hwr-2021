@@ -250,7 +250,7 @@ def segment_characters(input_dir: Path, output_dir: Path, write_params: WritePar
     return: None. Writes to file
     """
     output_dir.mkdir(parents=True, exist_ok=True)
-    for in_frag_path in input_dir.glob("*.jpg"):
+    for in_frag_path in input_dir.glob("*.jp*g"):
         extract_chars_from_fragment(in_frag_path, output_dir, write_params)
 
 
