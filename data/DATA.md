@@ -46,14 +46,9 @@ The data loader produces the following data structuring.
 
             Habbakuk.TTF
 
-        # currently train directories are also created
-        # but that is not sensible
-        # since we don't train on the fragment data
         fragments/
-            dev/
-                ...
-            test/
-                ...
+            fragment1.jpg
+            ...
         
         segmented_fragments/
             dev/

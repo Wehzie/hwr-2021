@@ -19,6 +19,7 @@ from src.data_handler.dataset_builder import DatasetBuilder
 from src.data_handler.hebrew import HebrewAlphabet
 from src.recognizer.model import RecognizerModel
 
+
 class TrainTest:
     """Train the Hebrew character recognizer."""
 

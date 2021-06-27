@@ -59,7 +59,7 @@ Test the models on given input fragments and output transcriptions and classific
     
 Training and testing can also be combined, for example:
 
-    python3 src/main.py --train --train-fast --test data/fragments/dev data/out
+    python3 src/main.py --train --train-fast --test data/fragments/ data/out
     
 ## Testing
 
