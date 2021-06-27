@@ -18,6 +18,7 @@ parser = argparse.ArgumentParser(description="Control the pipeline.")
 parser.add_argument(
     "input_dir",
     type=Path,
+    nargs='?',
     help="HWR course compliance: \
         provide an input directory with one or more fragment images"
 )

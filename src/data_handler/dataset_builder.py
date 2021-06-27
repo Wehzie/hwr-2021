@@ -191,7 +191,7 @@ class DatasetBuilder:
         return True if truth_agree else False
 
     def clean_data_fragments(self) -> None:
-        """Split DSS fragments into train, dev (validation) and test sets."""
+        """Clean up unnecessary files downloaded with the fragments."""
         read_path: Path = Path(os.environ["DATA_PATH"]) / "fragments"
         try:
             shutil.rmtree(read_path / "__MACOSX")
@@ -206,7 +206,8 @@ class DatasetBuilder:
             frag.unlink()
         frag_paths = frags_binarized
         for frag_path in frag_paths:
-            shutil.move(frag_path, read_path)
+            # Python 3.8 hack, seems to be supported without str() on 3.9
+            shutil.move(str(frag_path.resolve()), str(read_path.resolve()))
 
         (read_path / "image-data").rmdir()  # delete empty folder
 
