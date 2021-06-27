@@ -45,10 +45,22 @@ Navigate to the project's root directory.
 
     cd ~/path/to/project
 
-Execute the `main` module.
+Download and build the dataset as well as train the recognizer and classifier models.
 
-    python3 src/main.py
+    python3 src/main.py --train 
+    
+Optional parameter for faster custom models.
 
+    python3 src/main.py --train --train-fast
+    
+Test the models on given input fragments and output transcriptions and classifications
+
+    python3 src/main.py --test [input folder with fragments] [output folder]
+    
+Training and testing can also be combined, for example:
+
+    python3 src/main.py --train --train-fast --test data/fragments/dev data/out
+    
 ## Testing
 
 Navigate to the project's root directory.
