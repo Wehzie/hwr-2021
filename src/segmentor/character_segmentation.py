@@ -196,7 +196,7 @@ def extract_chars_from_fragment(in_frag_path, output_dir, w_par):
     return: None. Writes to file
     """
     # Extract lines
-    print(f"Processing {in_frag_path.name}")
+    print(f"Segmenting characters for {in_frag_path.stem}")
 
     # define output paths and make directories
     out_frag_path: Path = output_dir / in_frag_path.stem

@@ -109,6 +109,7 @@ class Transcriber:
         output_dir.mkdir(parents=True, exist_ok=True)
         char_dirs: list = self.match_character_folders(input_dir)
         for char_dir in char_dirs:
+            print(f"Transcribing {char_dir.parent.name}")
             self.transcribe_frag(char_dir, output_dir)
 
 

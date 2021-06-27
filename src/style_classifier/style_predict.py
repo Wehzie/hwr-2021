@@ -86,6 +86,7 @@ def date_fragments(input_dir: Path, output_dir: Path) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     char_dirs: list = match_character_folders(input_dir)
     for char_dir in char_dirs:
+        print(f"Predicting style for {char_dir.parent.name}")
         date_frag(char_dir, output_dir)
 
 
