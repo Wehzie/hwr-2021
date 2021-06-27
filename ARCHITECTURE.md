@@ -1,4 +1,4 @@
-# Architecture
+# Architecture (NOT UP TO DATE)
 
 ![The image was not found.](./img/ARCHITECTURE.png "Architecture")
 

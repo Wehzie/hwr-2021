@@ -1,4 +1,4 @@
-# meeting minutes
+# Meeting minutes
 
 ## Organizational tasks
 
