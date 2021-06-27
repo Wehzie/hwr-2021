@@ -33,8 +33,6 @@ parser.add_argument(
     help="train faster by using a simpler architecture. \
         Results in less recognition and classification accuracy.",
 )
-args = parser.parse_args()
-
 
 def get_work_dir() -> Path:
     """Create a cleared working directory for the pipeline's intermediate storage."""
@@ -84,6 +82,7 @@ def pipeline_test(input_dir: Path, output_dir: Path) -> None:
 
 
 if __name__ == "__main__":
+    args = parser.parse_args()
     if args.train and args.test:
         pipeline_train(args.train_fast)
         pipeline_test(input_dir=args.test[0], output_dir=args.test[1])

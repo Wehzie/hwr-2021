@@ -1,14 +1,28 @@
 import unittest
+import os
+from pathlib import Path
 
-from src import main
+from dotenv import load_dotenv
+
+from src.main import pipeline_train, pipeline_test
+
+load_dotenv()
 
 
 class TestMain(unittest.TestCase):
-    def test_hello_world(self):
+    def train_pipeline(self):
         """
-        Test that testing hello world from main works.
+        Test that the train pipeline works.
         """
-        self.assertEqual(main.hello_world(), "hello_world")
+        pipeline_train(train_fast=True)
+
+    def test_pipeline(self):
+        """
+        Test that the prediction pipeline works.
+        """
+        input_dir = Path(os.environ["DATA_PATH"]) / "fragments" / "dev"
+        output_dir = Path(os.environ["DATA_PATH"]) / "out"
+        pipeline_test(input_dir, output_dir)
 
 
 # make tests runnable from the command line
