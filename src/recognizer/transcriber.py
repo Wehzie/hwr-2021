@@ -45,34 +45,64 @@ class Transcriber:
             character_images.append(img)
         return image_paths, character_images
 
+    def transcribe_frag(self, input_dir: Path, output_dir: Path) -> None:
+        """
+        Transcribe a single fragment's characters.
+
+        input_dir: Path to a single directory with extracted characters.
+            For example data/fragment/characters/
+            Where character contains instances of character_L*_W*_C*.png
+        output_dir: Path to a directory to save the transcribed file.
+        returns: None. Saves to file.
+        """
+        paths, input = self.load_images(input_dir)
+        output_file = Path(f"{output_dir}/{input_dir.parent.name}_characters.txt")
+
+        file = open(
+            output_file,
+            "w",
+            encoding="utf8",
+        )
+
+        current_line, current_word = 0, 0
+        for i in range(len(input)):
+            file_name = paths[i].name
+            _, fragment_line, fragment_word, _ = file_name.split("_")
+            fragment_line = int(fragment_line.replace("L", ""))
+            fragment_word = int(fragment_word.replace("W", ""))
+            pred = np.argmax(self.recognizer.predict(input[i]), axis=1)[0]
+            uni_char = Hebrew.unicode_dict[Hebrew.letter_li[pred]]
+            if fragment_line > current_line:
+                file.write(f"\n{uni_char}")
+                current_line += 1
+                current_word = 0
+            elif fragment_word > current_word:
+                file.write(f" {uni_char}")
+                current_word += 1
+            else:
+                file.write(uni_char)
+
+        file.close()
+
+    def match_character_folders(self, input_dir: Path) -> list:
+        """
+        Find folders named "characters" under the provided path.
+
+        input_dir: Search under this path.
+        return: List of Paths matching the query.
+        """
+        # segmentation saves characters under fragment/characters
+        return input_dir.glob("**/characters")
+
+    def transcribe_fragments(self, input_dir: Path, output_dir: Path) -> None:
+        """ """
+        output_dir.mkdir(parents=True, exist_ok=True)
+        char_dirs: list = self.match_character_folders(input_dir)
+        for char_dir in char_dirs:
+            self.transcribe_frag(char_dir, output_dir)
+
 
 if __name__ == "__main__":
     args = ArgParser(description="Input directory with character images").parse_args()
-
     transcriber = Transcriber()
-    paths, input = transcriber.load_images(Path(args.input_dir))
-
-    current_line, current_word = 0, 0
-    file = open(
-        f"{args.output_dir}/{args.input_dir.parent.name}_characters.txt",
-        "w",
-        encoding="utf8",
-    )  # Check if this is full path or name
-
-    for i in range(len(input)):
-        file_name = paths[i].name
-        _, fragment_line, fragment_word, current_char = file_name.split("_")
-        fragment_line = int(fragment_line.replace("L", ""))
-        fragment_word = int(fragment_word.replace("W", ""))
-        pred = np.argmax(transcriber.recognizer.predict(input[i]), axis=1)[0]
-        uni_char = Hebrew.unicode_dict[Hebrew.letter_li[pred]]
-        if fragment_line > current_line:
-            file.write(f"\n{uni_char}")
-            current_line += 1
-            current_word = 0
-        elif fragment_word > current_word:
-            file.write(f" {uni_char}")
-            current_word += 1
-        else:
-            file.write(uni_char)
-    file.close()
+    transcriber.transcribe_fragments(args.input_dir, args.output_dir)

@@ -34,10 +34,13 @@ class ArgParser(Tap):
 class WriteParams:
     """Control what types of data are saved to file."""
 
-    frag: bool = True
-    line: bool = True
-    word: bool = True
-    char: bool = True
+    def __init__(
+        self, frag: bool = True, line: bool = True, word: bool = True, char: bool = True
+    ) -> None:
+        self.frag = frag
+        self.line = line
+        self.word = word
+        self.char = char
 
 
 def get_bounding_boxes(img: np.ndarray, min_pixel=120) -> List[BoundingBox]:
@@ -237,13 +240,23 @@ def extract_chars_from_fragment(in_frag_path, output_dir, w_par):
                         cv.imwrite(str(char_path.resolve()), char)
 
 
+def segment_characters(input_dir: Path, output_dir: Path, write_params: WriteParams):
+    """
+    Extract characters from one or more fragments.
+
+    in_frag_path: path to fragment(s) from which characters are extracted
+    output_dir: path of the directory to which characters are extracted
+    w_par: parameters for writing to file controlled by a data class
+    return: None. Writes to file
+    """
+    output_dir.mkdir(parents=True, exist_ok=True)
+    for in_frag_path in input_dir.glob("*.jpg"):
+        extract_chars_from_fragment(in_frag_path, output_dir, write_params)
+
+
 if __name__ == "__main__":
     args = ArgParser(
         description="Extract characters from binarized dead sea scroll pictures."
     ).parse_args()
-
     write_params = WriteParams()
-
-    # extract characters for each fragment
-    for in_frag_path in args.input_dir.glob("*.jpg"):
-        extract_chars_from_fragment(in_frag_path, args.output_dir, write_params)
+    segment_characters(args.input_dir, args.output_dir, write_params)
