@@ -35,6 +35,12 @@ After using the software you may wish to deactivate the virtual environment as f
 
     deactivate
 
+To enable elastic morphing during data augmentation run the following commands.
+
+    cd ~/path/to/project
+    cd src/data_handler/imagemorph
+    python3 setup.py build
+
 Lastly, ensure to manually add `.env` to the root directory of the project.
 This will for example enable downloading the password protected data.
 Contact the project authors to request the `.env` file.
@@ -49,17 +55,21 @@ Download and build the dataset as well as train the recognizer and classifier mo
 
     python3 src/main.py --train 
     
-Optional parameter for faster custom models.
+Optional parameter for faster learning custom models.
 
     python3 src/main.py --train --train-fast
     
 Test the models on given input fragments and output transcriptions and classifications
 
-    python3 src/main.py --test [input folder with fragments] [output folder]
+    python3 src/main.py --test path/to/input_dir path/to/output_dir
     
 Training and testing can also be combined, for example:
 
     python3 src/main.py --train --train-fast --test data/fragments/ data/out
+
+**Handwriting Recognition evaluation compliance:** The following will create recognition and classification output in a `results` directory.
+
+    python3 src/main.py path/to/test/fragments
     
 ## Testing
 
@@ -70,17 +80,6 @@ Navigate to the project's root directory.
 Run all tests using the `unittest` module.
 
     python3 -m unittest discover
-
-General introduction to unit tests.
-
-- <https://docs.python.org/3/library/unittest.html>
-- <https://realpython.com/python-testing/>
-
-Unit tests for deep learning models.
-
-- <https://www.tensorflow.org/api_docs/python/tf/test>
-- <https://www.tensorflow.org/community/contribute/tests>
-- <https://towardsdatascience.com/unit-testing-in-deep-learning-b91d366e4862>
 
 ## Architecture
 
