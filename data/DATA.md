@@ -46,7 +46,7 @@ The data loader produces the following data structuring.
 
             Habbakuk.TTF
 
-        # currently train directories are created
+        # currently train directories are also created
         # but that is not sensible
         # since we don't train on the fragment data
         fragments/
@@ -62,16 +62,61 @@ The data loader produces the following data structuring.
                 ...
         
         character_styles/
-            ...
+            Archaic/
+                Alef/
+                    *.jpg 
+                .../
+                    *.jpg
+                Zayin/
+                    *.jpg
+            Hasmonean/
+                Alef/
+                    *.jpg 
+                .../
+                    *.jpg
+                Zayin/
+                    *.jpg
+            Herodian
+                Alef/
+                    *.jpg 
+                .../
+                    *.jpg
+                Zayin/
+                    *.jpg
+
 
         fragment_styles/
-            ...
+            full_image_periods/
+                Archaic/
+                    fragment1.jpg
+                    ...
+                Hasmonean
+                    fragment1.jpg
+                    ...
+                Herodian
+                    fragment1.jpg
+                    ...
 
         model/                      # trained tensorflow models
-            custom/
+            recognizer/
+                model_0/
+                    assets/
+                    variables/
+                    saved_model.pb
                 ...
-            dense_net_121/
+            style/
+                model_0/
+                    assets/
+                    variables/
+                    saved_model.pb
                 ...
+            
+        work_dir/                   # this folder name is reserved by the pipeline
+            ---empty---             # as working directory
+                                    # files inside this folder will be automatically deleted
+        
+        out/                        # we recommend this folder name as output directory
+            ---empty---             # for the pipeline
 
 Applying character segmentation to a single fragment image results in the following output.
 Character segmentation populates the `segmented_fragments` directory.
