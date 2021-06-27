@@ -153,3 +153,6 @@ TODO.md
 
 # Pickled data files
 *.pkl
+
+# Results output
+results

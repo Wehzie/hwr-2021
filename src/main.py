@@ -16,6 +16,12 @@ from src.style_classifier.style_predict import date_fragments
 
 parser = argparse.ArgumentParser(description="Control the pipeline.")
 parser.add_argument(
+    "input_dir",
+    type=Path,
+    help="HWR course compliance: \
+        provide an input directory with one or more fragment images"
+)
+parser.add_argument(
     "--train",
     action="store_true",
     help="run train pipeline for character recognizer and style classifier",
@@ -84,7 +90,10 @@ def pipeline_test(input_dir: Path, output_dir: Path) -> None:
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    if args.train and args.test:
+    if args.input_dir:
+        # compliance with HWR course
+        pipeline_test(input_dir=args.input_dir, output_dir=Path("results"))
+    elif args.train and args.test:
         pipeline_train(args.train_fast)
         pipeline_test(input_dir=args.test[0], output_dir=args.test[1])
     elif args.train:
