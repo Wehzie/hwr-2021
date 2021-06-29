@@ -120,7 +120,7 @@ class TrainTest:
             min_delta=0.008,
         )
         print("Training and validating on characters.")
-        self.recognizer.model.fit(
+        history = self.recognizer.model.fit(
             self.X_train,
             self.y_train,
             validation_data=(self.X_dev, self.y_dev),
@@ -132,9 +132,9 @@ class TrainTest:
         model_name = self.recognizer.get_model_name()
         self.recognizer.save_model(model_name)
 
-        self.model_analysis(model_name)
+        self.model_analysis(model_name, history)
 
-    def model_analysis(self, model_name: str) -> None:
+    def model_analysis(self, model_name: str, history) -> None:
         """Analyse how well a model performed."""
         # probabilites
         y_pred_prob = self.recognizer.predict(self.X_test)
@@ -146,6 +146,29 @@ class TrainTest:
         output_dir = Path(os.environ["MODEL_DATA"]) / model_name
         out_name = "classification_report.txt"
         out_path = output_dir / out_name
+
+        acc = history.history['accuracy']
+        val_acc = history.history['val_accuracy']
+        loss = history.history['loss']
+        val_loss = history.history['val_loss']
+
+        epochs = range(1, len(acc) + 1)
+
+        # plot accuracies and losses with respect to epochs
+        plt.plot(epochs, acc, 'r', label='Train accuracy')
+        plt.plot(epochs, val_acc, 'b', label='Val accuracy')
+        plt.title('Training and validation accuracy')
+        plt.legend()
+
+        plt.savefig(output_dir/"acc-plot")
+
+        plt.figure()
+        plt.plot(epochs, loss, 'r', label='Training loss')
+        plt.plot(epochs, val_loss, 'b', label='Val loss')
+        plt.title('Training and validation loss')
+        plt.legend()
+
+        plt.savefig(output_dir/"loss-plot")
 
         # create, print and write to file a sklearn classification report
         print(set(self.y_test) - set(y_pred))
@@ -170,6 +193,7 @@ class TrainTest:
             colnames=["Predicted:"],
             margins=True,
         )
+        plt.figure()
         sns.heatmap(df.iloc[:-1, :-1], annot=True, fmt="g", cmap="viridis")
         # path handling for writing to file
         out_name = "heatmap.png"
