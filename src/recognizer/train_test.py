@@ -157,7 +157,9 @@ class TrainTest:
         # plot accuracies and losses with respect to epochs
         plt.plot(epochs, acc, 'r', label='Train accuracy')
         plt.plot(epochs, val_acc, 'b', label='Val accuracy')
-        plt.title('Training and validation accuracy')
+
+        plt.xlabel("Epoch")
+        plt.ylabel("Accuracy")
         plt.legend()
 
         plt.savefig(output_dir/"acc-plot")
@@ -165,7 +167,8 @@ class TrainTest:
         plt.figure()
         plt.plot(epochs, loss, 'r', label='Training loss')
         plt.plot(epochs, val_loss, 'b', label='Val loss')
-        plt.title('Training and validation loss')
+        plt.xlabel("Epoch")
+        plt.ylabel("Loss")
         plt.legend()
 
         plt.savefig(output_dir/"loss-plot")
