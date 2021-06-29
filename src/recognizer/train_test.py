@@ -108,8 +108,8 @@ class TrainTest:
         )
 
         font_chars = list((self.read_path / "train" / "Alef").iterdir())
-        if len(font_chars) == 27:
-            # print(self.recognizer.get_summary())
+        if len(font_chars) == 31:
+            #print(self.recognizer.get_summary())
             print("Pretraining on font data.")
             self.recognizer.model.fit(self.X_pretrain, self.y_pretrain)  # pretraining
 
@@ -215,7 +215,7 @@ class TrainTest:
         )
 
         font_chars = list((self.read_path / "train" / "Alef").iterdir())
-        if len(font_chars) == 27:
+        if len(font_chars) == 31:
             # print(self.recognizer.get_summary())
             print("Pretraining on font data.")
             self.recognizer.model.fit(self.X_pretrain, self.y_pretrain)  # pretraining
