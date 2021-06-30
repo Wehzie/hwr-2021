@@ -98,7 +98,7 @@ class TrainTest:
             np.array(y_test),
         )
 
-    def train_model(self, model_arch="dense_net_121") -> None:
+    def train_model(self, model_arch="dense_net_121", pretrain=False) -> None:
         """Train on X_train, y_train and validate on X_dev, y_dev."""
         self.recognizer.set_model((self.img_size[1], self.img_size[0]), 0.3, model_arch)
         self.recognizer.model.compile(
@@ -107,9 +107,9 @@ class TrainTest:
             metrics=["accuracy"],
         )
 
-        font_chars = list((self.read_path / "train" / "Alef").iterdir())
-        if len(font_chars) == 31:
-            #print(self.recognizer.get_summary())
+        font_chars = list((self.pretrain_path / "Alef").iterdir())
+        if len(font_chars) == 31 and pretrain:
+            # print(self.recognizer.get_summary())
             print("Pretraining on font data.")
             self.recognizer.model.fit(self.X_pretrain, self.y_pretrain)  # pretraining
 
@@ -147,31 +147,31 @@ class TrainTest:
         out_name = "classification_report.txt"
         out_path = output_dir / out_name
 
-        acc = history.history['accuracy']
-        val_acc = history.history['val_accuracy']
-        loss = history.history['loss']
-        val_loss = history.history['val_loss']
+        acc = history.history["accuracy"]
+        val_acc = history.history["val_accuracy"]
+        loss = history.history["loss"]
+        val_loss = history.history["val_loss"]
 
         epochs = range(1, len(acc) + 1)
 
         # plot accuracies and losses with respect to epochs
-        plt.plot(epochs, acc, 'r', label='Train accuracy')
-        plt.plot(epochs, val_acc, 'b', label='Val accuracy')
+        plt.plot(epochs, acc, "r", label="Train accuracy")
+        plt.plot(epochs, val_acc, "b", label="Val accuracy")
 
         plt.xlabel("Epoch")
         plt.ylabel("Accuracy")
         plt.legend()
 
-        plt.savefig(output_dir/"acc-plot")
+        plt.savefig(output_dir / "acc-plot")
 
         plt.figure()
-        plt.plot(epochs, loss, 'r', label='Training loss')
-        plt.plot(epochs, val_loss, 'b', label='Val loss')
+        plt.plot(epochs, loss, "r", label="Training loss")
+        plt.plot(epochs, val_loss, "b", label="Val loss")
         plt.xlabel("Epoch")
         plt.ylabel("Loss")
         plt.legend()
 
-        plt.savefig(output_dir/"loss-plot")
+        plt.savefig(output_dir / "loss-plot")
 
         # create, print and write to file a sklearn classification report
         print(set(self.y_test) - set(y_pred))
@@ -203,7 +203,7 @@ class TrainTest:
         out_path = output_dir / out_name
         plt.savefig(out_path)
 
-    def train_full_model(self, model_arch="dense_net_121") -> None:
+    def train_full_model(self, model_arch="dense_net_121", pretrain=False) -> None:
         """Train on all data and save the model, validate using test data"""
         X_concat = np.concatenate((self.X_train, self.X_dev, self.X_test), axis=0)
         y_concat = np.concatenate((self.y_train, self.y_dev, self.y_test), axis=0)
@@ -214,8 +214,8 @@ class TrainTest:
             metrics=["accuracy"],
         )
 
-        font_chars = list((self.read_path / "train" / "Alef").iterdir())
-        if len(font_chars) == 31:
+        font_chars = list((self.pretrain_path / "Alef").iterdir())
+        if len(font_chars) == 31 and pretrain:
             # print(self.recognizer.get_summary())
             print("Pretraining on font data.")
             self.recognizer.model.fit(self.X_pretrain, self.y_pretrain)  # pretraining
@@ -234,4 +234,4 @@ class TrainTest:
 
 if __name__ == "__main__":
     trainer = TrainTest()
-    trainer.train_model()
+    trainer.train_model(model_arch="custom")
