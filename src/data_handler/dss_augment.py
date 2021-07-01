@@ -42,14 +42,14 @@ class Augmenter:
         """Repeatedly apply morphing to character images of a font."""
         img_paths = glob(f"{dir_path}/*.jpg")
         amp = 2.5  # the amplitude of the deformation
-        sigma = 10  # the local image area affected (spread of the gaussian smoothing kernel)
+        sigma = (10)  # the local image area affected (spread of the gaussian smoothing kernel)
         for img_path in img_paths:
             img = cv.imread(str(img_path))
             h, w, _ = img.shape  # image height and width
             try:
                 for rep in range(reps):
                     res = elastic_morphing(img, amp, sigma, h, w)  # morph image
-                    cv.imwrite(f"{img_path}{rep}.jpg", res)  # write result to disk
+                    cv.imwrite(f"{img_path[-4]}{rep}.jpg", res)  # write result to disk
             except:
                 raise
 
